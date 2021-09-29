@@ -216,9 +216,9 @@ def createFuzzyController():
     #    'mom'     : mean of maximum
     #    'som'     : min of maximum
     #    'lom'     : max of maximum
-    ant1 = ctrl.Antecedent(np.linspace(-1, 1, 1000), 'input1')
-    ant2 = ctrl.Antecedent(np.linspace(-1, 1, 1000), 'input2')
-    cons1 = ctrl.Consequent(np.linspace(-1, 1, 1000), 'output1', defuzzify_method='centroid')
+    ant1 = ctrl.Antecedent(np.linspace(-90, 90, 1000), 'angle')
+    ant2 = ctrl.Antecedent(np.linspace(-100, 100, 1000), 'vitesse_angulaire')
+    cons1 = ctrl.Consequent(np.linspace(-100, 100, 1000), 'force', defuzzify_method='centroid')
 
     # Accumulation (accumulation_method) methods for fuzzy variables:
     #    np.fmax
@@ -226,16 +226,31 @@ def createFuzzyController():
     cons1.accumulation_method = np.fmax
 
     # TODO: Create membership functions
-    ant1['membership1'] = fuzz.trapmf(ant1.universe, [-1, -0.5, 0.5, 1])
-    ant1['membership2'] = fuzz.trapmf(ant1.universe, [-0.75, -0.5, 0.5, 0.75])
+    ant1['gauche'] = fuzz.trapmf(ant1.universe, [-90, -90, -60, 0])
+    ant1['droite'] = fuzz.trapmf(ant1.universe, [0, 60, 90, 90])
+    ant1['centre'] = fuzz.trimf(ant1.universe, [-15, 0, 15])
 
-    ant2['membership1'] = fuzz.trapmf(ant1.universe, [-1, -0.5, 0.5, 1])
+    ant2['gauche'] = fuzz.trapmf(ant2.universe, [-100, -100, -20, 0])
+    ant2['droite'] = fuzz.trapmf(ant2.universe, [0, 20, 100, 100])
+    ant2['centre'] = fuzz.trimf(ant2.universe, [-20, 0, 20])
 
-    cons1['membership1'] = fuzz.trimf(cons1.universe, [-1, 0, 1])
+    cons1['gauche'] = fuzz.trapmf(cons1.universe, [-50, -50, -20, 0])
+    cons1['droite'] = fuzz.trapmf(cons1.universe, [0, 20, 50, 50])
+    cons1['centre'] = fuzz.trimf(cons1.universe, [-20, 0, 20])
 
     # TODO: Define the rules.
     rules = []
-    rules.append(ctrl.Rule(antecedent=(ant1['membership1'] & ant2['membership1']), consequent=cons1['membership1']))
+    rules.append(ctrl.Rule(antecedent=(ant1['gauche'] & ant2['gauche']), consequent=cons1['droite']))
+    rules.append(ctrl.Rule(antecedent=(ant1['gauche'] & ant2['centre']), consequent=cons1['droite']))
+    rules.append(ctrl.Rule(antecedent=(ant1['gauche'] & ant2['droite']), consequent=cons1['centre']))
+    
+    rules.append(ctrl.Rule(antecedent=(ant1['centre'] & ant2['gauche']), consequent=cons1['droite']))
+    rules.append(ctrl.Rule(antecedent=(ant1['centre'] & ant2['centre']), consequent=cons1['centre']))
+    rules.append(ctrl.Rule(antecedent=(ant1['centre'] & ant2['droite']), consequent=cons1['gauche']))
+    
+    rules.append(ctrl.Rule(antecedent=(ant1['droite'] & ant2['gauche']), consequent=cons1['centre']))
+    rules.append(ctrl.Rule(antecedent=(ant1['droite'] & ant2['centre']), consequent=cons1['gauche']))
+    rules.append(ctrl.Rule(antecedent=(ant1['droite'] & ant2['droite']), consequent=cons1['gauche']))
 
     # Conjunction (and_func) and disjunction (or_func) methods for rules:
     #     np.fmin
@@ -288,15 +303,15 @@ def main():
             cartPosition, cartVelocity, poleAngle, poleVelocityAtTip = observation
 
             # TODO: set the input to the fuzzy system
-            sim.input['input1'] = 0
-            sim.input['input2'] = 0
+            sim.input['angle'] = poleAngle
+            sim.input['vitesse_angulaire'] = poleVelocityAtTip
 
             sim.compute()
             if VERBOSE:
                 sim.print_state()
 
             # TODO: get the output from the fuzzy system
-            force = sim.output['output1']
+            force = sim.output['force']
 
             action = np.array([force], dtype=np.float32).flatten()
 

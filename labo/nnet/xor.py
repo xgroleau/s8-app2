@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 
 from keras.models import Sequential, load_model
 from keras.layers import Dense
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam
 
 
 def main():
@@ -67,17 +67,24 @@ def main():
     # Create neural network
     # TODO : Tune the number and size of hidden layers
     model = Sequential()
-    model.add(Dense(units=2, activation='linear', input_shape=(2,)))
+    model.add(Dense(units=2, activation='sigmoid', input_shape=(2,)))
     model.add(Dense(units=1, activation='linear'))
     print(model.summary())
 
     # Define training parameters
     # TODO : Tune the training parameters
-    model.compile(optimizer=SGD(lr=0.01, momentum=0.9), loss='mse')
+    model.compile(optimizer=Adam(lr=0.05), loss='binary_crossentropy')
 
     # Perform training
     # TODO : Tune the maximum number of iterations
-    model.fit(data, target, batch_size=len(data), epochs=1000, shuffle=True, verbose=1)
+    history = model.fit(data, target, batch_size=len(data), epochs=1000, shuffle=True, verbose=1)
+    
+    plt.figure();
+    plt.plot(history.history['loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.show()
 
     # Save trained model to disk
     model.save('xor.h5')
