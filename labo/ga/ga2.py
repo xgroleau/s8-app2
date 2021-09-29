@@ -36,11 +36,15 @@ from mpl_toolkits.mplot3d import Axes3D
 # Define helper functions here
 ########################
 
-def bool2int(x):
+def bin_to_int(x):
+    x = np.flip(x)
     y = 0
     for i,j in enumerate(x):
-        y += j<<i
+        y += int(j)<<i
     return y
+
+def int_to_bool(x):
+    return np.flip([bool(x & (1<<n)) for n in range(8)])
 
 # usage: FITNESS = evaluateFitness(X, Y)
 #
@@ -72,12 +76,12 @@ def evaluateFitness(x, y):
 # Output:
 # - POPULATION, a binary matrix whose rows correspond to encoded individuals.
 #
-def initializePopulation(numparams, popsize, nbitss8):
+def initializePopulation(numparams, popsize, nbits=8):
     # Parameters should be in the interval [0,1], so
     # initialize values randomly in the interval [0,1]
 
     # TODO: initialize the population
-    population = np.random.choice([0,1], popsize, numparams * nbits))
+    population = np.random.choice([False, True], popsize, numparams * nbits * 2)
     return population
 
 
