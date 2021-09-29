@@ -29,10 +29,11 @@
 
 import numpy as np
 import scipy.io
+from sklearn.model_selection import train_test_split
 
 from keras.models import Sequential, load_model
 from keras.layers import Dense
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam
 
 ###############################################
 # Define helper functions here
@@ -51,6 +52,10 @@ def main():
     S = scipy.io.loadmat('iris.mat')
     data = np.array(S['data'], dtype=np.float32)
     target = np.array(S['target'], dtype=np.float32)
+    for i in range(3):
+        data[i] = (data[i] - data[i].min())/(data[i].max() - data[i].min())
+    
+    X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=15)
 
     # TODO : Apply any relevant transformation to the data
     # (e.g. filtering, normalization, dimensionality reduction)
@@ -58,20 +63,18 @@ def main():
     # Create neural network
     # TODO : Tune the number and size of hidden layers
     model = Sequential()
-    model.add(Dense(units=2, activation='sigmoid',
-                    input_shape=(data.shape[-1],)))
-    model.add(Dense(units=target.shape[-1], activation='tanh'))
+    model.add(Dense(units=6, activation='tanh', input_shape=(data.shape[-1],)))
+    model.add(Dense(units=target.shape[-1], activation='linear'))
     print(model.summary())
 
     # Define training parameters
     # TODO : Tune the training parameters
-    model.compile(optimizer=SGD(lr=1.0, momentum=0.9),
-                  loss='mse')
+    model.compile(optimizer=Adam(lr=0.05), loss='mse')
 
     # Perform training
     # TODO : Tune the maximum number of iterations
     model.fit(data, target, batch_size=len(data),
-              epochs=10, shuffle=True, verbose=1)
+              epochs=500, shuffle=False, verbose=1)
 
     # Save trained model to disk
     model.save('iris.h5')
