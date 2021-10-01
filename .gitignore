@@ -2,3 +2,5 @@
 problematique/.idea/
 
 problematique/torcs/__pycache__/
+
+*.pyc
