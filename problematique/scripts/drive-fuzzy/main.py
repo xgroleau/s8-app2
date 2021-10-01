@@ -40,6 +40,7 @@ CDIR = os.path.dirname(os.path.realpath(__file__))
 logger = logging.getLogger(__name__)
 
 from controllers.controller import Controller
+from controllers.steering_controllers.fuzzy_steering_controller_v1 import FuzzySteeringControllerV1
 
 ################################
 # Define helper functions here
@@ -56,6 +57,8 @@ def main():
 
             nbTracks = len(TorcsControlEnv.availableTracks)
             nbSuccessfulEpisodes = 0
+            controller = Controller(steeringController=FuzzySteeringControllerV1())
+            
             for episode in range(nbTracks):
                 logger.info('Episode no.%d (out of %d)' % (episode + 1, nbTracks))
                 startTime = time.time()
@@ -66,8 +69,6 @@ def main():
                 nbStepsShowStats = 1000
                 curNbSteps = 0
                 done = False
-                
-                controller = Controller()
                 
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
