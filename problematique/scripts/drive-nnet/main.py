@@ -32,6 +32,11 @@ import sys
 import time
 import logging
 
+import numpy as np
+from sklearn.model_selection import train_test_split
+
+from models import basic_fully_connected
+
 sys.path.append('../..')
 from torcs.control.core import TorcsControlEnv, TorcsException, EpisodeRecorder
 
@@ -46,10 +51,32 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    recordingsPath = os.path.join(CDIR, 'recordings')
-    if not os.path.exists(recordingsPath):
-        os.makedirs(recordingsPath)
+    # Training model
+    files = os.path.join(CDIR, 'data')
+    episodes = [EpisodeRecorder.restore(f) for f in files]
 
+    # Input
+    angle = np.array([e.angle for e in episodes]).flatten()
+    speed = np.array([e.speed for e in episodes]).flatten()
+    trackPos = np.array([e.trackPos for e in episodes]).flatten()
+    gear = np.array([e.gear for e in episodes]).flatten()
+    rpm = np.array([e.rpm for e in episodes]).flatten()
+
+    # Output
+    accelCmd = np.array([e.accelCmd for e in episodes]).flatten()
+    brakeCmd = np.array([e.brakeCmd for e in episodes]).flatten()
+    gearCmd = np.array([e.gearCmd for e in episodes]).flatten()
+    steerCmd = np.array([e.steerCmd for e in episodes]).flatten()
+
+    x = np.vstack((angle, speed, trackPos, gear, rpm))
+    y = np.vstack((accelCmd, brakeCmd, gearCmd, steerCmd))
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, shuffle=True, test_size=0.15)
+    model = basic_fully_connected.create_model()
+
+    model.fit(x_train, y_train, batch_size=300, epochs=500, shuffle=False, verbose=1)
+    exit(0)
+    
     try:
         with TorcsControlEnv(render=False) as env:
 
