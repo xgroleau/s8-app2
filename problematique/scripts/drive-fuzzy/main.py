@@ -39,6 +39,7 @@ CDIR = os.path.dirname(os.path.realpath(__file__))
 
 logger = logging.getLogger(__name__)
 
+from controllers.controller import Controller
 
 ################################
 # Define helper functions here
@@ -65,10 +66,12 @@ def main():
                 nbStepsShowStats = 1000
                 curNbSteps = 0
                 done = False
+                
+                controller = Controller()
+                
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
-                        # TODO: Select the next action based on the observation
-                        action = env.action_space.sample()
+                        action = controller.computeAction(observation)
                         recorder.save(observation, action)
     
                         # Execute the action
