@@ -28,9 +28,12 @@
 # Université de Sherbrooke, APP3 S8GIA, A2018
 
 import os
+from os import listdir
+from os.path import isfile, join
 import sys
 import time
 import logging
+
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -48,34 +51,63 @@ logger = logging.getLogger(__name__)
 ################################
 # Define helper functions here
 ################################
+def normalize(arr):
+    min_val = min(arr)
+    max_val = max(arr)
+    return (arr - min_val)/(max_val - min_val), min_val, max_val
 
+def denormalize(arr, min_val, max_val):
+    return (arr * (max_val - min_val)) + min_val
+
+def normalize_val(val, min_val, max_val):
+    return (val - min_val)/(max_val - min_val)
+    
 def main():
+    
+    recordingsPath = os.path.join(CDIR, 'recordings')
+    if not os.path.exists(recordingsPath):
+        os.makedirs(recordingsPath)
 
     # Training model
-    files = os.path.join(CDIR, 'data')
+    files_dir = os.path.join(CDIR, 'data')
+
+    files = [join(files_dir, f) for f in listdir(files_dir) if isfile(join(files_dir, f))]
     episodes = [EpisodeRecorder.restore(f) for f in files]
 
     # Input
-    angle = np.array([e.angle for e in episodes]).flatten()
-    speed = np.array([e.speed for e in episodes]).flatten()
-    trackPos = np.array([e.trackPos for e in episodes]).flatten()
-    gear = np.array([e.gear for e in episodes]).flatten()
-    rpm = np.array([e.rpm for e in episodes]).flatten()
+    speed = np.concatenate([e.speed for e in episodes])
+    speed_x = speed[:, 0]
+    speed_y = speed[:, 1]
+    angle = np.concatenate([e.angle for e in episodes]).squeeze()
+    trackPos = np.concatenate([e.trackPos for e in episodes]).squeeze()
+    gear = np.concatenate([e.gear for e in episodes]).squeeze()
+    rpm = np.concatenate([e.rpm for e in episodes]).squeeze()
 
     # Output
-    accelCmd = np.array([e.accelCmd for e in episodes]).flatten()
-    brakeCmd = np.array([e.brakeCmd for e in episodes]).flatten()
-    gearCmd = np.array([e.gearCmd for e in episodes]).flatten()
-    steerCmd = np.array([e.steerCmd for e in episodes]).flatten()
+    accelCmd = np.concatenate([e.accelCmd for e in episodes]).squeeze()
+    brakeCmd = np.concatenate([e.brakeCmd for e in episodes]).squeeze()
+    gearCmd = np.concatenate([e.gearCmd for e in episodes]).squeeze()
+    steerCmd = np.concatenate([e.steerCmd for e in episodes]).squeeze()
+    
+    
+    # Normalisation
+    # Input
+    # Gear is not normalized since it's a discreate value
+    speed_x, min_speed_x, max_speed_x = normalize(speed_x)
+    speed_y, min_speed_y, max_speed_y = normalize(speed_y)
+    angle, min_angle, max_angle = normalize(angle)
+    trackPos, min_trackPos, max_trackPos = normalize(trackPos)
+    rpm, min_rpm, max_rpm  = normalize(rpm)
 
-    x = np.vstack((angle, speed, trackPos, gear, rpm))
-    y = np.vstack((accelCmd, brakeCmd, gearCmd, steerCmd))
+    x = np.dstack((angle, speed_x, speed_y, trackPos, gear, rpm)).squeeze()
+    y = np.dstack((accelCmd, brakeCmd, gearCmd, steerCmd)).squeeze()
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, shuffle=True, test_size=0.15)
     model = basic_fully_connected.create_model()
 
-    model.fit(x_train, y_train, batch_size=300, epochs=500, shuffle=False, verbose=1)
-    exit(0)
+    model.fit(x_train, y_train, batch_size=300, epochs=5, shuffle=False, verbose=1)
+    
+    #####
     
     try:
         with TorcsControlEnv(render=False) as env:
@@ -94,8 +126,24 @@ def main():
                 done = False
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
+                        # Parsing data and normalize input
+                        
+                        angle_val = normalize_val(observation['angle'][0], min_angle, max_angle)
+                        speed_x_val = normalize_val(observation['speed'][0], min_speed_x, max_speed_x)
+                        speed_y_val = normalize_val(observation['speed'][0], min_speed_y, max_speed_y)
+                        trackPos_val = normalize_val(observation['trackPos'][0], min_trackPos, max_trackPos)
+                        gear_val = observation['gear']
+                        rpm_val = normalize_val(observation['rpm'][0], min_rpm, max_rpm)
+                        
+                        test = model.predict(np.array([[angle_val, speed_x_val, speed_y_val, trackPos_val, gear_val, rpm_val]])).squeeze()
+                        
                         # TODO: Select the next action based on the observation
-                        action = env.action_space.sample()
+                        action = {
+                                'accel': np.array([test[0]], dtype=np.float32),
+                                'brake': np.array([test[1]], dtype=np.float32),
+                                'gear': np.array([round(test[2])], dtype=np.int32),
+                                'steer': np.array([test[3]], dtype=np.float32)
+                        }
                         recorder.save(observation, action)
     
                         # Execute the action

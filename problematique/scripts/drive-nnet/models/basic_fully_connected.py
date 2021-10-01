@@ -7,10 +7,12 @@ def create_model():
     # Define training parameters
     # TODO : Tune the training parameters
     model = Sequential()
-    model.add(Dense(units=16, activation='relu', input_shape=(5,)))
-    model.add(Dense(units=8, activation='relu'))
+    model.add(Dense(units=18, activation='relu', input_shape=(6,)))
+    model.add(Dense(units=9, activation='relu'))
     model.add(Dense(units=4, activation='relu'))
     model.compile(optimizer=Adam(lr=0.05), loss='mean_squared_error')
+    
+    print(model.summary())
 
     return model
     # Perform training
