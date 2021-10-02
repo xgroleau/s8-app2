@@ -1,6 +1,6 @@
 def normalize(arr):
-    min_val = min(arr)
-    max_val = max(arr)
+    min_val = arr.min()
+    max_val = arr.max()
     return (arr - min_val)/(max_val - min_val), min_val, max_val
 
 def denormalize(arr, min_val, max_val):

@@ -68,7 +68,8 @@ def main():
 
     # Driving
     x_driving = np.dstack((dataset.angle, dataset.speed_x, dataset.speed_y, dataset.trackPos)).squeeze()
-    y_driving = np.dstack((dataset.accelCmd, dataset.brakeCmd, dataset.steerCmd)).squeeze()
+    x_driving = np.column_stack((x_driving, dataset.track))
+    y_driving = np.dstack((dataset.accelBrakeCmd, dataset.steerCmd)).squeeze()
 
     x_train_drive, x_test_drive, y_train_drive, y_test_drive = train_test_split(x_driving, y_driving, shuffle=True, test_size=0.15)
     model_drive = driving_model.create_driving_model()
@@ -107,21 +108,30 @@ def main():
                         speed_x_val = dataset.normalize_speed_x(observation['speed'][0])
                         speed_y_val = dataset.normalize_speed_y(observation['speed'][1])
                         trackPos_val = dataset.normalize_trackPos(observation['trackPos'][0])
-                        # track_val = dataset.normalize_track(observation['track'][0])
+                        track_val = dataset.normalize_track(observation['track'])
                         gear_val = observation['gear']
                         rpm_val = dataset.normalize_rpm(observation['rpm'][0])
 
-                        driving_input = np.array([[angle_val, speed_x_val, speed_y_val, trackPos_val]])
+                        # Predictions
+                        driving_input = np.array([angle_val, speed_x_val, speed_y_val, trackPos_val])
+                        driving_input = np.array([np.concatenate((driving_input, track_val))])
                         prediction_driving = model_drive.predict(driving_input).squeeze()
 
                         gear_input = np.column_stack((rpm_val, dataset.gear_to_categorical(gear_val)))
                         prediction_gear = dataset.gear_to_int(model_gear.predict(gear_input).squeeze())
+
+                        # Extract values from predictions
+                        accel_action = min(prediction_driving[0], 1) if prediction_driving[0] > 0 else 0
+                        brake_action = min(abs(prediction_driving[0]), 1) if prediction_driving[0] < 0 else 0
+                        steer_action = prediction_driving[1]
+                        gear_action = prediction_gear
+
                         # TODO: Select the next action based on the observation
                         action = {
-                                'accel': np.array([prediction_driving[0]], dtype=np.float32),
-                                'brake': np.array([prediction_driving[1]], dtype=np.float32),
-                                'steer': np.array([prediction_driving[2]], dtype=np.float32),
-                                'gear': np.array(([prediction_gear]), dtype=np.int32)
+                                'accel': np.array([accel_action], dtype=np.float32),
+                                'brake': np.array([brake_action], dtype=np.float32),
+                                'steer': np.array([steer_action], dtype=np.float32),
+                                'gear': np.array(([gear_action]), dtype=np.int32)
                         }
                         recorder.save(observation, action)
     

@@ -6,3 +6,5 @@ problematique/torcs/__pycache__/
 *.pyc
 
 problematique/scripts/drive-nnet/recordings/
+
+.idea/

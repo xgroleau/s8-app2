@@ -1,11 +1,14 @@
 from os import listdir
 from os.path import join, isfile
+import sys
 
 import numpy as np
 from .utils.utils import normalize, normalize_val, denormalize
 from keras.utils import to_categorical
 
-from problematique.torcs.control.core import EpisodeRecorder
+sys.path.append('../..')
+sys.path.append('../../..')
+from torcs.control.core import EpisodeRecorder
 
 
 class DataSet:
@@ -45,8 +48,11 @@ class DataSet:
         # Output
         gearCmd = np.concatenate([e.gearCmd for e in episodes]).squeeze()
         self.gearCmd = self.gear_to_categorical(gearCmd)  # Makes all values positive, 8 classes from -1 to 6
+
         self.accelCmd = np.concatenate([e.accelCmd for e in episodes]).squeeze()
         self.brakeCmd = np.concatenate([e.brakeCmd for e in episodes]).squeeze()
+        self.accelBrakeCmd = self.accelCmd - self.brakeCmd
+
         self.steerCmd = np.concatenate([e.steerCmd for e in episodes]).squeeze()
 
     def normalize(self):
@@ -55,7 +61,7 @@ class DataSet:
         self.speed_y, self.min_speed_y, self.max_speed_y = normalize(self.speed_y)
         self.angle, self.min_angle, self.max_angle = normalize(self.angle)
         self.trackPos, self.min_trackPos, self.max_trackPos = normalize(self.trackPos)
-        # track, min_track, max_track = normalize(self.track)
+        self.track, self.min_track, self.max_track = normalize(self.track)
         self.rpm, self.min_rpm, self.max_rpm = normalize(self.rpm)
 
     def normalize_angle(self, angle):
@@ -72,6 +78,9 @@ class DataSet:
 
     def normalize_rpm(self, rpm):
         return normalize_val(rpm, self.min_rpm, self.max_rpm)
+
+    def normalize_track(self, track):
+        return normalize_val(track, self.min_track, self.max_track)
 
     def gear_to_categorical(self, gear):
         return to_categorical(gear + 1, num_classes=8)
