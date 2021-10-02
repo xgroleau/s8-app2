@@ -37,7 +37,7 @@ from keras.optimizers import SGD, Adam
 
 def main():
 
-    # XOR data set
+    # XOR data_set set
     data = np.array([[0, 0],
                      [0, 1],
                      [1, 0],
@@ -50,7 +50,7 @@ def main():
                        [0]],
                       dtype=np.float32)
 
-    # Show the 2D data
+    # Show the 2D data_set
     colors = np.array([[1.0, 0.0, 0.0],   # Red
                        [0.0, 0.0, 1.0]])  # Blue
     c = colors[np.squeeze(target == 0).astype(np.int)]
@@ -93,7 +93,7 @@ def main():
     model = load_model('xor.h5')
     targetPred = model.predict(data)
 
-    # Print the number of classification errors from the training data
+    # Print the number of classification errors from the training data_set
     nbErrors = np.sum(np.round(targetPred) != target)
     accuracy = (len(data) - nbErrors) / len(data)
     print('Classification accuracy: %0.3f' % (accuracy))
