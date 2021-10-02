@@ -40,7 +40,8 @@ CDIR = os.path.dirname(os.path.realpath(__file__))
 logger = logging.getLogger(__name__)
 
 from controllers.controller import Controller
-from controllers.steering_controllers.fuzzy_steering_controller_v1 import FuzzySteeringControllerV1
+from controllers.steering_controllers.fuzzy_steering_controller_sugeno import FuzzySteeringControllerSugeno
+from controllers.speed_controllers.fuzzy_speed_controller_sugeno_v2 import FuzzySpeedControllerSugenoV2
 
 ################################
 # Define helper functions here
@@ -57,7 +58,10 @@ def main():
 
             nbTracks = len(TorcsControlEnv.availableTracks)
             nbSuccessfulEpisodes = 0
-            controller = Controller(steeringController=FuzzySteeringControllerV1())
+            controller = Controller(
+                    steeringController = FuzzySteeringControllerSugeno(),
+                    speedController = FuzzySpeedControllerSugenoV2()
+                    )
             
             for episode in range(nbTracks):
                 logger.info('Episode no.%d (out of %d)' % (episode + 1, nbTracks))

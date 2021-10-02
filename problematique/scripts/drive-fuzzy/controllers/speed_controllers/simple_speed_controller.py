@@ -2,7 +2,7 @@ import numpy as np
 
 class SimpleSpeedController:
     def __init__(self):
-        self.absEnabled = True
+        self.absEnabled = False
     
     # usage: ACCELERATION = calculateAcceleration(STATE)
     #
@@ -35,7 +35,7 @@ class SimpleSpeedController:
             rxSensor = state['track'][8]
             # Reading of sensor parallel to car axis
             cSensor = state['track'][9]
-            # Reading of sensor at -5 degree w.r.t. car axis
+            # Reading of sensor at -10 degree w.r.t. car axis
             sxSensor = state['track'][10]
 
             # Track is straight and enough far from a turn so goes to max speed

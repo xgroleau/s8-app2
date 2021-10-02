@@ -1,13 +1,10 @@
-### ********* SHOW DIFFERENCE BETWEN MIN AND MULTIPLY
-### MIN has more wiggle
-
 import numpy as np
 import skfuzzy as fuzz
 import matplotlib.pyplot as plt
 
 from skfuzzy import control as ctrl
 
-class FuzzySteeringControllerV1:
+class FuzzySteeringControllerSugeno:
     def __init__(self):
         self.sim = createFuzzyController()
         
@@ -18,6 +15,27 @@ class FuzzySteeringControllerV1:
         self.sim.compute()
         
         return self.sim.output['steerCmd']
+    
+def singletonmf(x, a):
+    """
+    Singleton membership function generator.
+    Parameters
+    ----------
+    x : 1d array
+        Independent variable.
+    a : constant
+    Returns
+    -------
+    y : 1d array
+        Singleton membership function.
+    """
+    y = np.zeros(len(x))
+
+    if a >= np.min(x) and a <= np.max(x):
+        idx = (np.abs(x - a)).argmin()
+        y[idx] = 1.0
+
+    return y
 
 def createFuzzyController():
     # Fuzzy variables (Universe of Discourse)
@@ -40,11 +58,11 @@ def createFuzzyController():
     trackPos['center'] = fuzz.trapmf(trackPos.universe, [-0.2, -0.05, 0.05, 0.2])
     trackPos['right'] = fuzz.trapmf(trackPos.universe, [0.05, 0.5, 1, 1])
     
-    steerCmd['hardLeft'] = fuzz.trapmf(steerCmd.universe, [-1, -1, -0.75, -0.5])
-    steerCmd['left'] = fuzz.trapmf(steerCmd.universe, [-0.75, -0.5, -0.25, -0.01])
-    steerCmd['straight'] = fuzz.trapmf(steerCmd.universe, [-0.1, -0.01, 0.01, 0.1])
-    steerCmd['right'] = fuzz.trapmf(steerCmd.universe, [0.01, 0.25, 0.5, 0.75])
-    steerCmd['hardRight'] = fuzz.trapmf(steerCmd.universe, [0.5, 0.75, 1, 1])
+    steerCmd['hardLeft'] = singletonmf(steerCmd.universe, -1)
+    steerCmd['left'] = singletonmf(steerCmd.universe, -0.4)
+    steerCmd['straight'] = singletonmf(steerCmd.universe, 0)
+    steerCmd['right'] = singletonmf(steerCmd.universe, 0.4)
+    steerCmd['hardRight'] = singletonmf(steerCmd.universe, 1)
     
     # Rules
     rules = []

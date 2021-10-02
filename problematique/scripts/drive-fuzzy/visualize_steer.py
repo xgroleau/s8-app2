@@ -41,5 +41,5 @@ plt.hist(episode.angle)
 
 plt.show()
 
-episode.visualize(showObservations=True, showActions=True)
+episode2.visualize(showObservations=True, showActions=True)
 plt.show()
