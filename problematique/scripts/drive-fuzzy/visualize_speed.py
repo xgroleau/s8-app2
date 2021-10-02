@@ -75,9 +75,9 @@ plt.plot(episode.track[:, 10], label='Track 10')
 plt.legend()
 
 plt.figure()
-plt.plot(targetSpeed, label='Target')
 plt.plot(episode.speed[:, 0], label='Actual')
-plt.plot(-episode.brakeCmd, label='Accel')
+plt.plot(episode.accelCmd*100, label='Accel')
+plt.plot(-episode.brakeCmd*100, label='Brake')
 plt.legend()
 
 #plt.figure()

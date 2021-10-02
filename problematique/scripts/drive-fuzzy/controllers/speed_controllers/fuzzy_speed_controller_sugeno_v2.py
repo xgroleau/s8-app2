@@ -112,7 +112,7 @@ def createFuzzyController():
 
     
     accelCmd['maxBrake'] = singletonmf(accelCmd.universe, -1)
-    accelCmd['brake'] = singletonmf(accelCmd.universe, -0.4)
+    accelCmd['brake'] = singletonmf(accelCmd.universe, 0)
     accelCmd['cruise'] = singletonmf(accelCmd.universe, 0.5)
     accelCmd['accel'] = singletonmf(accelCmd.universe, 1)
     #accelCmd['maxAccel'] = singletonmf(accelCmd.universe, 1)
