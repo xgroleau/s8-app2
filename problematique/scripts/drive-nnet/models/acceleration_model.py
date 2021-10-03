@@ -2,6 +2,8 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.optimizers import Adam
 import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.model_selection import train_test_split
 
 
 def create():
@@ -17,16 +19,24 @@ def create():
 
 
 def create_trained(dataset):
-    # Driving
     x_accel = np.dstack((dataset.speed_x, dataset.trackPos)).squeeze()
     x_accel = np.column_stack((x_accel, dataset.track[:, 8:11], dataset.wheelSpinVel))
     y_accel = np.dstack((dataset.accelCmd, dataset.brakeCmd)).squeeze()
 
-    # TODO: check if we split
-    # x_train_drive, x_test_drive, y_train_drive, y_test_drive = train_test_split(x_driving, y_driving, shuffle=True, test_size=0.15)
+    x_train, x_test, y_train, y_test = train_test_split(x_accel, y_accel, shuffle=True, test_size=0.15)
 
     model = create()
-    model.fit(x_accel, y_accel, batch_size=300, epochs=5, shuffle=False, verbose=1)
+    history = model.fit(x_train, y_train, batch_size=64, epochs=15, shuffle=False, verbose=1)
+    loss = model.evaluate(x_test, y_test)
+
+    plt.figure()
+    plt.plot(history.history['loss'])
+    plt.title('Acceleration model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.savefig("figures/loss/accel-loss-005")
+    plt.show()
+    print(f"Accel model loss on test set: {loss}")
     return model
 
 

@@ -1,7 +1,8 @@
-from keras.models import Sequential, load_model
+from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 
 def create():
@@ -23,10 +24,10 @@ def create_trained(dataset):
     y_driving = np.dstack((dataset.accelBrakeCmd, dataset.steerCmd)).squeeze()
 
     # TODO: check if we split
-    # x_train_drive, x_test_drive, y_train_drive, y_test_drive = train_test_split(x_driving, y_driving, shuffle=True, test_size=0.15)
+    #x_train_drive, x_test_drive, y_train_drive, y_test_drive = train_test_split(x_driving, y_driving, shuffle=True, test_size=0.15)
     
     model = create()
-    model.fit(x_driving, y_driving, batch_size=300, epochs=5, shuffle=False, verbose=1)
+    hist = model.fit(x_train_drive, y_train_drive, batch_size=300, epochs=5, shuffle=False, verbose=1)
     return model
 
 

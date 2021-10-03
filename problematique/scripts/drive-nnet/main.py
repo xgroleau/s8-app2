@@ -39,6 +39,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 from models import driving_model, gear_model, acceleration_model, steering_model
+from keras.models import load_model
 from data.dataset import DataSet
 
 sys.path.append('../..')
@@ -65,15 +66,25 @@ def main():
 
     # Normalisation
     dataset.normalize()
+    generate_models = False
 
-    # Accel
-    model_accel = acceleration_model.create_trained(dataset)
+    if generate_models:
+        # Accel
+        model_accel = acceleration_model.create_trained(dataset)
+        model_accel.save('model_accel.h5')
 
-    # Steer
-    model_steer = steering_model.create_trained(dataset)
+        # Steer
+        model_steer = steering_model.create_trained(dataset)
+        model_steer.save('model_steer.h5')
 
-    # Gear model
-    model_gear = gear_model.create_trained(dataset)
+        # Gear model
+        model_gear = gear_model.create_trained(dataset)
+        model_gear.save('model_gear.h5')
+
+
+    model_accel = load_model('model_accel.h5')
+    model_steer = load_model('model_steer.h5')
+    model_gear = load_model('model_gear.h5')
     
     try:
         with TorcsControlEnv(render=False) as env:
