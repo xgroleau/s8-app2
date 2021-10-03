@@ -19,6 +19,7 @@ class DataSet:
     angle: np.array
     trackPos: np.array
     track: np.array
+    wheelSpinVel: np.array
     gear: np.array
     rpm: np.array
 
@@ -43,6 +44,7 @@ class DataSet:
         self.angle = np.concatenate([e.angle for e in episodes]).squeeze()
         self.trackPos = np.concatenate([e.trackPos for e in episodes]).squeeze()
         self.track = np.concatenate([e.track for e in episodes]).squeeze()
+        self.wheelSpinVel = np.concatenate([e.wheelSpinVel for e in episodes]).squeeze()
         self.rpm = np.concatenate([e.rpm for e in episodes]).squeeze()
 
         # Output
@@ -62,6 +64,7 @@ class DataSet:
         self.angle, self.min_angle, self.max_angle = normalize(self.angle)
         self.trackPos, self.min_trackPos, self.max_trackPos = normalize(self.trackPos)
         self.track, self.min_track, self.max_track = normalize(self.track)
+        self.wheelSpinVel, self.min_wheelSpinVel, self.max_wheelSpinVel = normalize(self.wheelSpinVel)
         self.rpm, self.min_rpm, self.max_rpm = normalize(self.rpm)
 
     def normalize_angle(self, angle):
@@ -75,6 +78,9 @@ class DataSet:
 
     def normalize_trackPos(self, trackPos):
         return normalize_val(trackPos, self.min_trackPos, self.max_trackPos)
+
+    def normalize_wheelSpinVel(self, wheelSpinVel):
+        return normalize_val(wheelSpinVel, self.min_wheelSpinVel, self.max_wheelSpinVel)
 
     def normalize_rpm(self, rpm):
         return normalize_val(rpm, self.min_rpm, self.max_rpm)

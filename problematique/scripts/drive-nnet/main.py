@@ -38,7 +38,7 @@ import logging
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from models import driving_model, gear_model
+from models import driving_model, gear_model, acceleration_model, steering_model
 from data.dataset import DataSet
 
 sys.path.append('../..')
@@ -66,27 +66,17 @@ def main():
     # Normalisation
     dataset.normalize()
 
-    # Driving
-    x_driving = np.dstack((dataset.angle, dataset.speed_x, dataset.speed_y, dataset.trackPos)).squeeze()
-    x_driving = np.column_stack((x_driving, dataset.track, dataset.gear))
-    y_driving = np.dstack((dataset.accelBrakeCmd, dataset.steerCmd)).squeeze()
+    # Accel
+    model_accel = acceleration_model.create_trained(dataset)
 
-    x_train_drive, x_test_drive, y_train_drive, y_test_drive = train_test_split(x_driving, y_driving, shuffle=True, test_size=0.15)
-    model_drive = driving_model.create_driving_model()
-
-    model_drive.fit(x_train_drive, y_train_drive, batch_size=300, epochs=5, shuffle=False, verbose=1)
+    # Steer
+    model_steer = steering_model.create_trained(dataset)
 
     # Gear model
-    x_gear = np.column_stack((dataset.rpm, dataset.gear))
-    y_gear = dataset.gearCmd
-
-    x_train_gear, x_test_gear, y_train_gear, y_test_gear = train_test_split(x_gear, y_gear, shuffle=True, test_size=0.15)
-    model_gear = gear_model.create_gear_model()
-
-    model_gear.fit(x_train_gear, y_train_gear, batch_size=300, epochs=5, shuffle=False, verbose=1)
+    model_gear = gear_model.create_trained(dataset)
     
     try:
-        with TorcsControlEnv(render=True) as env:
+        with TorcsControlEnv(render=False) as env:
 
             nbTracks = len(TorcsControlEnv.availableTracks)
             nbSuccessfulEpisodes = 0
@@ -102,36 +92,15 @@ def main():
                 done = False
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
-                        # Parsing data_set and normalize input
-                        
-                        angle_val = dataset.normalize_angle(observation['angle'][0])
-                        speed_x_val = dataset.normalize_speed_x(observation['speed'][0])
-                        speed_y_val = dataset.normalize_speed_y(observation['speed'][1])
-                        trackPos_val = dataset.normalize_trackPos(observation['trackPos'][0])
-                        track_val = dataset.normalize_track(observation['track'])
-                        gear_val = dataset.gear_to_categorical(observation['gear'])
-                        rpm_val = dataset.normalize_rpm(observation['rpm'][0])
 
-                        # Predictions
-                        driving_input = np.array([angle_val, speed_x_val, speed_y_val, trackPos_val])
-                        driving_input = np.array([np.concatenate((driving_input, track_val, gear_val.squeeze()))])
-                        prediction_driving = model_drive.predict(driving_input).squeeze()
+                        accel_action = acceleration_model.predict(model_accel, observation, dataset)
+                        steering_action = steering_model.predict(model_steer, observation, dataset)
+                        gear_action = gear_model.predict(model_gear, observation, dataset)
 
-                        gear_input = np.column_stack((rpm_val, gear_val))
-                        prediction_gear = dataset.gear_to_int(model_gear.predict(gear_input).squeeze())
-
-                        # Extract values from predictions
-                        accel_action = min(prediction_driving[0], 1) if prediction_driving[0] > 0 else 0
-                        brake_action = min(abs(prediction_driving[0]), 1) if prediction_driving[0] < 0 else 0
-                        steer_action = min(prediction_driving[1], 1)
-                        gear_action = prediction_gear
-
-                        # TODO: Select the next action based on the observation
                         action = {
-                                'accel': np.array([accel_action], dtype=np.float32),
-                                'brake': np.array([brake_action], dtype=np.float32),
-                                'steer': np.array([steer_action], dtype=np.float32),
-                                'gear': np.array(([gear_action]), dtype=np.int32)
+                            **accel_action,
+                            **steering_action,
+                            **gear_action,
                         }
                         recorder.save(observation, action)
     
