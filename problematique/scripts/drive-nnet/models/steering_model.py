@@ -6,9 +6,9 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def create(lr):
+def create(lr, l1):
     model = Sequential()
-    model.add(Dense(units=9, activation='relu', input_shape=(3,)))
+    model.add(Dense(units=l1, activation='relu', input_shape=(3,)))
     model.add(Dense(units=1, activation='tanh'))
     model.compile(optimizer=Adam(lr=lr), loss='mean_squared_error')
 
@@ -17,23 +17,23 @@ def create(lr):
     return model
 
 
-def create_trained(dataset, lr=0.0001):
+def create_trained(dataset, lr=0.0001, l1=9):
     x_steering = np.dstack((dataset.angle, dataset.speed_x, dataset.trackPos)).squeeze()
     y_steering = np.dstack((dataset.steerCmd, )).squeeze()
 
     x_train, x_test, y_train, y_test = train_test_split(x_steering, y_steering, shuffle=True, test_size=0.15)
 
-    model = create(lr)
+    model = create(lr, l1)
     history = model.fit(x_train, y_train, batch_size=64, epochs=20, validation_data=(x_test, y_test), shuffle=False, verbose=1)
 
     plt.figure()
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title(f'Steering model loss LR {lr}')
+    plt.title(f'Steering model loss LR {lr}, L1={l1}')
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(["train_loss", "val_loss"])
-    plt.savefig(f"figures/loss/steering-loss-{lr}.png")
+    plt.savefig(f"figures/loss/steering-loss-{lr}-l1-{l1}.png")
     plt.show()
     return model
 

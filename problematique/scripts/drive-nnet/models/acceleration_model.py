@@ -6,10 +6,10 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def create(lr):
+def create(lr, l1, l2):
     model = Sequential()
-    model.add(Dense(units=18, activation='relu', input_shape=(9,)))
-    model.add(Dense(units=6, activation='relu'))
+    model.add(Dense(units=l1, activation='relu', input_shape=(9,)))
+    model.add(Dense(units=l2, activation='relu'))
     model.add(Dense(units=2, activation='sigmoid'))
     model.compile(optimizer=Adam(lr), loss='mean_squared_error')
 
@@ -18,24 +18,24 @@ def create(lr):
     return model
 
 
-def create_trained(dataset, lr=0.005):
+def create_trained(dataset, lr=0.001, l1=18, l2=6):
     x_accel = np.dstack((dataset.speed_x, dataset.trackPos)).squeeze()
     x_accel = np.column_stack((x_accel, dataset.track[:, 8:11], dataset.wheelSpinVel))
     y_accel = np.dstack((dataset.accelCmd, dataset.brakeCmd)).squeeze()
 
     x_train, x_test, y_train, y_test = train_test_split(x_accel, y_accel, shuffle=True, test_size=0.15)
 
-    model = create(lr)
+    model = create(lr, l1, l2)
     history = model.fit(x_train, y_train, batch_size=64, epochs=20, validation_data=(x_test, y_test), shuffle=False, verbose=1)
 
     plt.figure()
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title(f'Acceleration model loss LR {lr}')
+    plt.title(f'Acceleration model loss LR={lr}, L1={l1}, L2={l2}')
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(["train_loss", "val_loss"])
-    plt.savefig(f"figures/loss/accel-loss-{lr}.png")
+    plt.savefig(f"figures/loss/accel-loss-{lr}-l1-{l1}-l2-{l2}.png")
     plt.show()
     return model
 
