@@ -6,19 +6,19 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def create(lr=0.001):
+def create(lr):
     model = Sequential()
     model.add(Dense(units=18, activation='relu', input_shape=(9,)))
     model.add(Dense(units=6, activation='relu'))
     model.add(Dense(units=2, activation='sigmoid'))
-    model.compile(optimizer=Adam(lr=0.005), loss='mean_squared_error')
+    model.compile(optimizer=Adam(lr), loss='mean_squared_error')
 
     print(model.summary())
 
     return model
 
 
-def create_trained(dataset, lr=0.001):
+def create_trained(dataset, lr=0.005):
     x_accel = np.dstack((dataset.speed_x, dataset.trackPos)).squeeze()
     x_accel = np.column_stack((x_accel, dataset.track[:, 8:11], dataset.wheelSpinVel))
     y_accel = np.dstack((dataset.accelCmd, dataset.brakeCmd)).squeeze()
@@ -35,9 +35,8 @@ def create_trained(dataset, lr=0.001):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(["train_loss", "val_loss"])
-    plt.savefig(f"figures/loss/accel-loss-{lr}")
+    plt.savefig(f"figures/loss/accel-loss-{lr}.png")
     plt.show()
-    print(f"Accel model loss on test set: {loss}")
     return model
 
 

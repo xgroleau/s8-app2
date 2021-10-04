@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def create(lr=0.001):
+def create(lr):
     model = Sequential()
     model.add(Dense(units=12, activation='sigmoid', input_shape=(9,)))
     model.add(Dense(units=8, activation='softmax'))
@@ -17,7 +17,7 @@ def create(lr=0.001):
     return model
 
 
-def create_trained(dataset, lr=0.01):
+def create_trained(dataset, lr=0.0005):
     x_gear = np.column_stack((dataset.rpm, dataset.gear))
     y_gear = dataset.gearCmd
 
@@ -33,9 +33,8 @@ def create_trained(dataset, lr=0.01):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(["train_loss", "val_loss"])
-    plt.savefig(f"figures/loss/gear-loss-{lr}")
+    plt.savefig(f"figures/loss/gear-loss-{lr}.png")
     plt.show()
-    print(f"Gear model loss on test set: {loss}")
     return model
 
 
