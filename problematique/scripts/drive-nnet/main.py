@@ -66,22 +66,27 @@ def main():
 
     # Normalisation
     dataset.normalize()
-    generate_models = False
+    generate_models = True
 
     if generate_models:
-        # Accel
-        model_accel = acceleration_model.create_trained(dataset)
-        model_accel.save('model_accel.h5')
 
-        # Steer
-        model_steer = steering_model.create_trained(dataset)
-        model_steer.save('model_steer.h5')
+        rates = [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005]
+        import gc
+        for rate in rates:
+            # Accel
+            model_accel = acceleration_model.create_trained(dataset, rate)
+            model_accel.save('model_accel.h5')
 
-        # Gear model
-        model_gear = gear_model.create_trained(dataset)
-        model_gear.save('model_gear.h5')
+            # Steer
+            model_steer = steering_model.create_trained(dataset,rate)
+            model_steer.save('model_steer.h5')
 
+            # Gear model
+            model_gear = gear_model.create_trained(dataset, rate)
+            model_gear.save('model_gear.h5')
+            gc.collect()
 
+    exit(0)
     model_accel = load_model('model_accel.h5')
     model_steer = load_model('model_steer.h5')
     model_gear = load_model('model_gear.h5')

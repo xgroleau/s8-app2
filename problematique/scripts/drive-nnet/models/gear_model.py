@@ -6,33 +6,34 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def create():
+def create(lr=0.001):
     model = Sequential()
     model.add(Dense(units=12, activation='sigmoid', input_shape=(9,)))
     model.add(Dense(units=8, activation='softmax'))
-    model.compile(optimizer=Adam(lr=0.0005), loss='mean_squared_error')
+    model.compile(optimizer=Adam(lr=lr), loss='mean_squared_error')
 
     print(model.summary())
 
     return model
 
 
-def create_trained(dataset):
+def create_trained(dataset, lr=0.01):
     x_gear = np.column_stack((dataset.rpm, dataset.gear))
     y_gear = dataset.gearCmd
 
     x_train, x_test, y_train, y_test = train_test_split(x_gear, y_gear, shuffle=True, test_size=0.15)
-    model = create()
+    model = create(lr)
 
-    history = model.fit(x_train, y_train, batch_size=64, epochs=15, shuffle=False, verbose=1)
-    loss = model.evaluate(x_test, y_test)
+    history = model.fit(x_train, y_train, batch_size=64, epochs=20, validation_data=(x_test, y_test), shuffle=False, verbose=1)
 
     plt.figure()
     plt.plot(history.history['loss'])
-    plt.title('Gear model loss')
+    plt.plot(history.history['val_loss'])
+    plt.title(f'Gear model loss LR {lr}')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.savefig("figures/loss/gear-loss-0005")
+    plt.legend(["train_loss", "val_loss"])
+    plt.savefig(f"figures/loss/gear-loss-{lr}")
     plt.show()
     print(f"Gear model loss on test set: {loss}")
     return model

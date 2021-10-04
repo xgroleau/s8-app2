@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def create():
+def create(lr=0.001):
     model = Sequential()
     model.add(Dense(units=18, activation='relu', input_shape=(9,)))
     model.add(Dense(units=6, activation='relu'))
@@ -18,23 +18,24 @@ def create():
     return model
 
 
-def create_trained(dataset):
+def create_trained(dataset, lr=0.001):
     x_accel = np.dstack((dataset.speed_x, dataset.trackPos)).squeeze()
     x_accel = np.column_stack((x_accel, dataset.track[:, 8:11], dataset.wheelSpinVel))
     y_accel = np.dstack((dataset.accelCmd, dataset.brakeCmd)).squeeze()
 
     x_train, x_test, y_train, y_test = train_test_split(x_accel, y_accel, shuffle=True, test_size=0.15)
 
-    model = create()
-    history = model.fit(x_train, y_train, batch_size=64, epochs=15, shuffle=False, verbose=1)
-    loss = model.evaluate(x_test, y_test)
+    model = create(lr)
+    history = model.fit(x_train, y_train, batch_size=64, epochs=20, validation_data=(x_test, y_test), shuffle=False, verbose=1)
 
     plt.figure()
     plt.plot(history.history['loss'])
-    plt.title('Acceleration model loss')
+    plt.plot(history.history['val_loss'])
+    plt.title(f'Acceleration model loss LR {lr}')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.savefig("figures/loss/accel-loss-005")
+    plt.legend(["train_loss", "val_loss"])
+    plt.savefig(f"figures/loss/accel-loss-{lr}")
     plt.show()
     print(f"Accel model loss on test set: {loss}")
     return model
