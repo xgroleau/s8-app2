@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 
 from skfuzzy import control as ctrl
 
+# Old Fuzzy Controller that uses the target speed computed by drive simple 
+# and the actual speed to decide what to do with accel and brake
 class FuzzySpeedControllerSugeno:
     def __init__(self):
         self.sim = createFuzzyController()
@@ -142,11 +144,5 @@ def createFuzzyController():
 
     system = ctrl.ControlSystem(rules)
     sim = ctrl.ControlSystemSimulation(system)
-
-    for var in sim.ctrl.fuzzy_variables:
-        var.view()
-    plt.show()
     
     return sim
-
-createFuzzyController()

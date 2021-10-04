@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 from controllers.controller import Controller
 from controllers.steering_controllers.fuzzy_steering_controller_sugeno import FuzzySteeringControllerSugeno
 from controllers.speed_controllers.fuzzy_speed_controller_sugeno_v2 import FuzzySpeedControllerSugenoV2
+from controllers.gear_controller.fuzzy_gear_controller import FuzzyGearController
 
 ################################
 # Define helper functions here
@@ -58,9 +59,13 @@ def main():
 
             nbTracks = len(TorcsControlEnv.availableTracks)
             nbSuccessfulEpisodes = 0
+            
+            # Construct the controller using the controller we wish.
+            # For example, we could have the FuzzyGearController with a SimpleSteeringController
             controller = Controller(
                     steeringController = FuzzySteeringControllerSugeno(),
-                    speedController = FuzzySpeedControllerSugenoV2()
+                    speedController = FuzzySpeedControllerSugenoV2(),
+                    gearController = FuzzyGearController()
                     )
             
             for episode in range(nbTracks):
@@ -76,6 +81,7 @@ def main():
                 
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
+                        # Compute action from the controller
                         action = controller.computeAction(observation)
                         recorder.save(observation, action)
     

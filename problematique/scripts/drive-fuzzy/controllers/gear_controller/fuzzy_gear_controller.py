@@ -7,6 +7,11 @@ from skfuzzy import control as ctrl
 class FuzzyGearController:
     def __init__(self):
         self.sim = createFuzzyController()
+        
+    def view(self):
+        for var in self.sim.ctrl.fuzzy_variables:
+            var.view()
+            plt.show()
     
     def calculateGear(self, state):
         curGear = state['gear'][0]
@@ -16,12 +21,15 @@ class FuzzyGearController:
         self.sim.compute()
         gearCmd = self.sim.output['gearCmd']
         
+        # If in N or R, go to gear 1
         if curGear < 1:
             nextGear = 1
             
+        # Don't allow shifting than highest gear
         elif curGear < 6 and gearCmd >= 0.5:
             nextGear = curGear + 1
         
+        # Don't allow going below gear 1
         elif curGear > 1 and gearCmd <= -0.5:
             nextGear = curGear - 1
             
@@ -84,11 +92,5 @@ def createFuzzyController():
 
     system = ctrl.ControlSystem(rules)
     sim = ctrl.ControlSystemSimulation(system)
-
-    for var in sim.ctrl.fuzzy_variables:
-        var.view()
-    plt.show()
     
     return sim
-
-createFuzzyController()

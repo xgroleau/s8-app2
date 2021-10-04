@@ -1,5 +1,6 @@
 import numpy as np
 
+# Taken from drive-simple
 class SimpleSpeedController:
     def __init__(self):
         self.absEnabled = False

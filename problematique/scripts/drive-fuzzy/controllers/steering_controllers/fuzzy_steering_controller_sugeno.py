@@ -8,14 +8,23 @@ class FuzzySteeringControllerSugeno:
     def __init__(self):
         self.sim = createFuzzyController()
         
+    def view(self):
+        for var in self.sim.ctrl.fuzzy_variables:
+            var.view()
+            plt.show()
+        
     def calculateSteering(self, state):
+        # Set fuzzy variables
         self.sim.input['angle'] = state['angle'][0]
         self.sim.input['trackPos'] = state['trackPos'][0]
         
+        # Compute output
         self.sim.compute()
         
+        # Return command
         return self.sim.output['steerCmd']
-    
+
+# Taken from lab answers
 def singletonmf(x, a):
     """
     Singleton membership function generator.
@@ -82,12 +91,9 @@ def createFuzzyController():
         rule.and_func = np.multiply
         rule.or_func = np.fmax
 
+    # Construct system
     system = ctrl.ControlSystem(rules)
     sim = ctrl.ControlSystemSimulation(system)
-
-    for var in sim.ctrl.fuzzy_variables:
-        var.view()
-    plt.show()
     
     return sim
 

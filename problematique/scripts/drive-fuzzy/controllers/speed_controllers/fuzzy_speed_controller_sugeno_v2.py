@@ -8,44 +8,54 @@ class FuzzySpeedControllerSugenoV2:
     def __init__(self):
         self.sim = createFuzzyController()
         
-    def calculateAcceleration(self, state):
+    def view(self):
+        for var in self.sim.ctrl.fuzzy_variables:
+            var.view()
+            plt.show()
+            
+    # Function to calculate the approximate angle of the road.
+    # Adapated from what is done in drive-simple
+    def calculateRoadAngle(self, state):
         maxSpeedDist = 95.0
         sin10 = 0.17365
         cos10 = 0.98481
 
+        # Reading of sensor at +10 degree w.r.t. car axis
+        rxSensor = state['track'][8]
+        # Reading of sensor parallel to car axis
+        cSensor = state['track'][9]
+        # Reading of sensor at -10 degree w.r.t. car axis
+        sxSensor = state['track'][10]
+
+        # Track is straight and enough far from a turn so goes to max speed
+        if cSensor > maxSpeedDist or (cSensor >= rxSensor and cSensor >= sxSensor):
+            angle = 0
+        else:
+            # Approaching a turn on right
+            if rxSensor > sxSensor:
+                # Computing approximately the "angle" of turn
+                h = cSensor * sin10
+                b = rxSensor - cSensor * cos10
+                angle = np.arcsin(b * b / (h * h + b * b))
+
+            # Approaching a turn on left
+            else:
+                # Computing approximately the "angle" of turn
+                h = cSensor * sin10
+                b = sxSensor - cSensor * cos10
+                angle = np.arcsin(b * b / (h * h + b * b))
+        
+        return angle
+        
+    def calculateAcceleration(self, state):
         curSpeedX = state['speed'][0]
         curTrackPos = state['trackPos'][0]
-
+        cSensor = state['track'][9]
+        
         # checks if car is out of track
         if (curTrackPos < 1 and curTrackPos > -1):
-
-            # Reading of sensor at +10 degree w.r.t. car axis
-            rxSensor = state['track'][8]
-            # Reading of sensor parallel to car axis
-            cSensor = state['track'][9]
-            # Reading of sensor at -10 degree w.r.t. car axis
-            sxSensor = state['track'][10]
-
-            # Track is straight and enough far from a turn so goes to max speed
-            if cSensor > maxSpeedDist or (cSensor >= rxSensor and cSensor >= sxSensor):
-                angle = 0
-            else:
-                # Approaching a turn on right
-                if rxSensor > sxSensor:
-                    # Computing approximately the "angle" of turn
-                    h = cSensor * sin10
-                    b = rxSensor - cSensor * cos10
-                    angle = np.arcsin(b * b / (h * h + b * b))
-
-                # Approaching a turn on left
-                else:
-                    # Computing approximately the "angle" of turn
-                    h = cSensor * sin10
-                    b = sxSensor - cSensor * cos10
-                    angle = np.arcsin(b * b / (h * h + b * b))
-
-                # Estimate the target speed depending on turn and on how close it is
-
+            angle = self.calculateRoadAngle(state)
+                
             self.sim.input['roadCurve'] = angle
             self.sim.input['currentSpeed'] = curSpeedX
             self.sim.input['frontSensor'] = cSensor
@@ -148,6 +158,7 @@ def createFuzzyController():
     rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['big'] & currentSpeed['slow']), consequent=accelCmd['accel']))
     rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['big'] & currentSpeed['medium']), consequent=accelCmd['noGas']))
     rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['big'] & currentSpeed['fast']), consequent=accelCmd['maxBrake']))
+    
     for rule in rules:
         rule.and_func = np.multiply
         rule.or_func = np.fmax
@@ -155,10 +166,4 @@ def createFuzzyController():
     system = ctrl.ControlSystem(rules)
     sim = ctrl.ControlSystemSimulation(system)
 
-    for var in sim.ctrl.fuzzy_variables:
-        var.view()
-    plt.show()
-    
     return sim
-
-createFuzzyController()

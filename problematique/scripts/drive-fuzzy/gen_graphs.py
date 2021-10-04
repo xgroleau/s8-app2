@@ -1,3 +1,5 @@
+# Script that generates curves for an array of episodes
+
 import sys
 import os
 import matplotlib.pyplot as plt

@@ -1,5 +1,6 @@
 import numpy as np
 
+# Taken from drive-simple
 class SimpleSteeringController:
     def __init__(self):
         pass
