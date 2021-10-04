@@ -44,6 +44,7 @@ class DataSet:
         self.angle = np.concatenate([e.angle for e in episodes]).squeeze()
         self.trackPos = np.concatenate([e.trackPos for e in episodes]).squeeze()
         self.track = np.concatenate([e.track for e in episodes]).squeeze()
+        self.curveVal = np.concatenate([self.calculate_curve_val_arr(e.track, e.trackPos) for e in episodes]).squeeze()
         self.wheelSpinVel = np.concatenate([e.wheelSpinVel for e in episodes]).squeeze()
         self.rpm = np.concatenate([e.rpm for e in episodes]).squeeze()
 
@@ -64,6 +65,7 @@ class DataSet:
         self.angle, self.min_angle, self.max_angle = normalize(self.angle)
         self.trackPos, self.min_trackPos, self.max_trackPos = normalize(self.trackPos)
         self.track, self.min_track, self.max_track = normalize(self.track)
+        self.curveVal, self.min_curveVal, self.max_curveVal = normalize(self.curveVal)
         self.wheelSpinVel, self.min_wheelSpinVel, self.max_wheelSpinVel = normalize(self.wheelSpinVel)
         self.rpm, self.min_rpm, self.max_rpm = normalize(self.rpm)
 
@@ -79,6 +81,9 @@ class DataSet:
     def normalize_trackPos(self, trackPos):
         return normalize_val(trackPos, self.min_trackPos, self.max_trackPos)
 
+    def normalize_curveVal(self, curveVal):
+        return normalize_val(curveVal, self.min_curveVal, self.max_curveVal)
+
     def normalize_wheelSpinVel(self, wheelSpinVel):
         return normalize_val(wheelSpinVel, self.min_wheelSpinVel, self.max_wheelSpinVel)
 
@@ -89,7 +94,58 @@ class DataSet:
         return normalize_val(track, self.min_track, self.max_track)
 
     def gear_to_categorical(self, gear):
-        return to_categorical(gear + 1, num_classes=8)
+        return to_categorical(gear + 1, num_classes=9)
 
     def gear_to_int(self, categorical_gear):
-        return np.argmax(categorical_gear) -1
+        return np.argmax(categorical_gear) - 1
+
+    def calculate_curve_val(self, track, trackPos):
+        sin10 = 0.17365
+        cos10 = 0.98481
+
+        rxSensor = track[8]
+        cSensor = track[9]
+        sxSensor = track[10]
+
+        if trackPos < 1 and trackPos > -1:
+            if rxSensor > sxSensor:
+                # Computing approximately the "angle" of turn
+                h = cSensor * sin10
+                b = rxSensor - cSensor * cos10
+                return np.arcsin(b * b / (h * h + b * b))
+
+            # Approaching a turn on left
+            else:
+                # Computing approximately the "angle" of turn
+                h = cSensor * sin10
+                b = sxSensor - cSensor * cos10
+                return - np.arcsin(b * b / (h * h + b * b))
+        else:
+            return 0
+
+    def calculate_curve_val_arr(self, track, trackPos):
+        sin10 = 0.17365
+        cos10 = 0.98481
+
+        output = np.zeros(track.shape[0])
+        for i in range(output.shape[0]):
+            rxSensor = track[i][8]
+            cSensor = track[i][9]
+            sxSensor = track[i][10]
+            if trackPos[i] < 1 and trackPos[i] > -1:
+                if rxSensor > sxSensor:
+                    # Computing approximately the "angle" of turn
+                    h = cSensor * sin10
+                    b = rxSensor - cSensor * cos10
+                    output[i] = np.arcsin(b * b / (h * h + b * b))
+
+                # Approaching a turn on left
+                else:
+                    # Computing approximately the "angle" of turn
+                    h = cSensor * sin10
+                    b = sxSensor - cSensor * cos10
+                    output[i] = - np.arcsin(b * b / (h * h + b * b))
+            else:
+                output[i] = 0
+
+        return output

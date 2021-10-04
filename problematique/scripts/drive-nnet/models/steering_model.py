@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def create(lr=0.001):
+def create(lr):
     model = Sequential()
     model.add(Dense(units=9, activation='relu', input_shape=(3,)))
     model.add(Dense(units=1, activation='tanh'))
@@ -17,7 +17,7 @@ def create(lr=0.001):
     return model
 
 
-def create_trained(dataset, lr=0.01):
+def create_trained(dataset, lr=0.0005):
     x_steering = np.dstack((dataset.angle, dataset.speed_x, dataset.trackPos)).squeeze()
     y_steering = np.dstack((dataset.steerCmd, )).squeeze()
 
@@ -33,10 +33,9 @@ def create_trained(dataset, lr=0.01):
     plt.title('Steering model loss LR {lr}')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(["train_loss", "val_loss"])
-    plt.savefig(f"figures/loss/steering-loss-{lr}")
+    # plt.legend(["train_loss", "val_loss"])
+    #plt.savefig(f"figures/loss/steering-loss-{lr}.png")
     plt.show()
-    print(f"Steering model loss on test set: {loss}")
     return model
 
 

@@ -69,30 +69,19 @@ def main():
     generate_models = True
 
     if generate_models:
+        # Driving
+        model_driving = driving_model.create_trained(dataset)
+        model_driving.save('model_driving.h5')
 
-        rates = [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005]
-        import gc
-        for rate in rates:
-            # Accel
-            model_accel = acceleration_model.create_trained(dataset, rate)
-            model_accel.save('model_accel.h5')
+        # Gear model
+        #model_gear = gear_model.create_trained(dataset)
+        #model_gear.save('model_gear.h5')
 
-            # Steer
-            model_steer = steering_model.create_trained(dataset,rate)
-            model_steer.save('model_steer.h5')
-
-            # Gear model
-            model_gear = gear_model.create_trained(dataset, rate)
-            model_gear.save('model_gear.h5')
-            gc.collect()
-
-    exit(0)
-    model_accel = load_model('model_accel.h5')
-    model_steer = load_model('model_steer.h5')
+    model_driving = load_model('model_driving.h5')
     model_gear = load_model('model_gear.h5')
-    
+
     try:
-        with TorcsControlEnv(render=False) as env:
+        with TorcsControlEnv(render=True) as env:
 
             nbTracks = len(TorcsControlEnv.availableTracks)
             nbSuccessfulEpisodes = 0
@@ -109,13 +98,11 @@ def main():
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
 
-                        accel_action = acceleration_model.predict(model_accel, observation, dataset)
-                        steering_action = steering_model.predict(model_steer, observation, dataset)
+                        driving_action = driving_model.predict(model_driving, observation, dataset)
                         gear_action = gear_model.predict(model_gear, observation, dataset)
 
                         action = {
-                            **accel_action,
-                            **steering_action,
+                            **driving_action,
                             **gear_action,
                         }
                         recorder.save(observation, action)
