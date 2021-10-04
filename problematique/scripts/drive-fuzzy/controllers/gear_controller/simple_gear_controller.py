@@ -1,6 +1,6 @@
 class SimpleGearController:
     def __init__(self):
-        self.absEnabled = True
+        pass
     
     # usage: GEAR = calculateGear(STATE)
     #

@@ -48,6 +48,7 @@ class FuzzySpeedControllerSugenoV2:
 
             self.sim.input['roadCurve'] = angle
             self.sim.input['currentSpeed'] = curSpeedX
+            self.sim.input['frontSensor'] = cSensor
         
             self.sim.compute()
         
@@ -93,7 +94,8 @@ def createFuzzyController():
     # Fuzzy variables (Universe of Discourse)
     # Inputs
     roadCurve = ctrl.Antecedent(np.linspace(0, np.pi/2, 1000), 'roadCurve')
-    currentSpeed = ctrl.Antecedent(np.linspace(0, 300, 1000), 'currentSpeed')
+    currentSpeed = ctrl.Antecedent(np.linspace(0, 120, 1000), 'currentSpeed')
+    frontSensor = ctrl.Antecedent(np.linspace(0, 100, 1000), 'frontSensor')
     
     # Outputs
     accelCmd = ctrl.Consequent(np.linspace(-1, 1, 1000), 'accelCmd', defuzzify_method='centroid')
@@ -104,33 +106,48 @@ def createFuzzyController():
     # Membership Functions
     roadCurve['none'] = fuzz.trapmf(roadCurve.universe, [0, 0, 0.4, 0.8])
     roadCurve['small'] = fuzz.trapmf(roadCurve.universe, [0.6, 0.7, 0.9, 1])
-    roadCurve['big'] = fuzz.trapmf(roadCurve.universe, [0.8, 1, np.pi/2, np.pi/2])
+    roadCurve['big'] = fuzz.trapmf(roadCurve.universe, [0.9, 1.2, np.pi/2, np.pi/2])
     
-    currentSpeed['slow'] = fuzz.trapmf(currentSpeed.universe, [0, 0, 15, 50])
-    currentSpeed['medium'] = fuzz.trapmf(currentSpeed.universe, [40, 70, 90, 120])
-    currentSpeed['fast'] = fuzz.trapmf(currentSpeed.universe, [100, 150, 300, 300])
+    currentSpeed['slow'] = fuzz.trapmf(currentSpeed.universe, [0, 0, 15, 40])
+    currentSpeed['medium'] = fuzz.trapmf(currentSpeed.universe, [20, 50, 90, 120])
+    currentSpeed['fast'] = fuzz.trapmf(currentSpeed.universe, [80, 100, 120, 120])
+    
+    frontSensor['close'] = fuzz.trapmf(frontSensor.universe, [0, 0, 20, 60])
+    frontSensor['far'] = fuzz.trapmf(frontSensor.universe, [20, 60, 100, 100])
 
     
     accelCmd['maxBrake'] = singletonmf(accelCmd.universe, -1)
-    accelCmd['brake'] = singletonmf(accelCmd.universe, 0)
+    accelCmd['noGas'] = singletonmf(accelCmd.universe, 0)
     accelCmd['cruise'] = singletonmf(accelCmd.universe, 0.5)
     accelCmd['accel'] = singletonmf(accelCmd.universe, 1)
     #accelCmd['maxAccel'] = singletonmf(accelCmd.universe, 1)
     
     # Rules
     rules = []
-    rules.append(ctrl.Rule(antecedent=(roadCurve['none'] & currentSpeed['slow']), consequent=accelCmd['accel']))
-    rules.append(ctrl.Rule(antecedent=(roadCurve['none'] & currentSpeed['medium']), consequent=accelCmd['accel']))
-    rules.append(ctrl.Rule(antecedent=(roadCurve['none'] & currentSpeed['fast']), consequent=accelCmd['cruise']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['none'] & currentSpeed['slow']), consequent=accelCmd['accel']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['none'] & currentSpeed['medium']), consequent=accelCmd['accel']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['none'] & currentSpeed['fast']), consequent=accelCmd['cruise']))
     
-    rules.append(ctrl.Rule(antecedent=(roadCurve['small'] & currentSpeed['slow']), consequent=accelCmd['cruise']))
-    rules.append(ctrl.Rule(antecedent=(roadCurve['small'] & currentSpeed['medium']), consequent=accelCmd['cruise']))
-    rules.append(ctrl.Rule(antecedent=(roadCurve['small'] & currentSpeed['fast']), consequent=accelCmd['brake']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['small'] & currentSpeed['slow']), consequent=accelCmd['accel']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['small'] & currentSpeed['medium']), consequent=accelCmd['cruise']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['small'] & currentSpeed['fast']), consequent=accelCmd['cruise']))
     
-    rules.append(ctrl.Rule(antecedent=(roadCurve['big'] & currentSpeed['slow']), consequent=accelCmd['cruise']))
-    rules.append(ctrl.Rule(antecedent=(roadCurve['big'] & currentSpeed['medium']), consequent=accelCmd['brake']))
-    rules.append(ctrl.Rule(antecedent=(roadCurve['big'] & currentSpeed['fast']), consequent=accelCmd['maxBrake']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['big'] & currentSpeed['slow']), consequent=accelCmd['accel']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['big'] & currentSpeed['medium']), consequent=accelCmd['noGas']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['far'] & roadCurve['big'] & currentSpeed['fast']), consequent=accelCmd['maxBrake']))
     
+    
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['none'] & currentSpeed['slow']), consequent=accelCmd['cruise']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['none'] & currentSpeed['medium']), consequent=accelCmd['maxBrake']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['none'] & currentSpeed['fast']), consequent=accelCmd['maxBrake']))
+    
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['small'] & currentSpeed['slow']), consequent=accelCmd['cruise']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['small'] & currentSpeed['medium']), consequent=accelCmd['noGas']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['small'] & currentSpeed['fast']), consequent=accelCmd['maxBrake']))
+    
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['big'] & currentSpeed['slow']), consequent=accelCmd['accel']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['big'] & currentSpeed['medium']), consequent=accelCmd['noGas']))
+    rules.append(ctrl.Rule(antecedent=(frontSensor['close'] & roadCurve['big'] & currentSpeed['fast']), consequent=accelCmd['maxBrake']))
     for rule in rules:
         rule.and_func = np.multiply
         rule.or_func = np.fmax
