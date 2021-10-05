@@ -3,7 +3,9 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 import numpy as np
 from matplotlib import pyplot as plt
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
+import datetime
 
 
 def create(lr, l1, l2):
@@ -19,6 +21,8 @@ def create(lr, l1, l2):
 
 
 def create_trained(dataset, lr=0.001, l1=18, l2=6):
+    log_dir = f"logs/accel-lr-{lr}-l1-{l1}-l2{l2}" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+
     x_accel = np.dstack((dataset.speed_x, dataset.trackPos)).squeeze()
     x_accel = np.column_stack((x_accel, dataset.track[:, 8:11], dataset.wheelSpinVel))
     y_accel = np.dstack((dataset.accelCmd, dataset.brakeCmd)).squeeze()
@@ -26,17 +30,11 @@ def create_trained(dataset, lr=0.001, l1=18, l2=6):
     x_train, x_test, y_train, y_test = train_test_split(x_accel, y_accel, shuffle=True, test_size=0.15)
 
     model = create(lr, l1, l2)
-    history = model.fit(x_train, y_train, batch_size=64, epochs=20, validation_data=(x_test, y_test), shuffle=False, verbose=1)
+    history = model.fit(x_train, y_train, batch_size=64, epochs=50, validation_data=(x_test, y_test), shuffle=False,
+                verbose=1, callbacks=[
+                tf.keras.callbacks.TensorBoard(log_dir)
+                ])
 
-    plt.figure()
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title(f'Acceleration model loss LR={lr}, L1={l1}, L2={l2}')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(["train_loss", "val_loss"])
-    plt.savefig(f"figures/loss/accel-loss-{lr}-l1-{l1}-l2-{l2}.png")
-    plt.show()
     return model
 
 

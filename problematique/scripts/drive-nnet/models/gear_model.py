@@ -4,6 +4,8 @@ from keras.optimizers import Adam
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
+import datetime
+import tensorflow as tf
 
 
 def create(lr, l1):
@@ -18,23 +20,18 @@ def create(lr, l1):
 
 
 def create_trained(dataset, lr=0.0005, l1=12):
+    log_dir = f"logs/gear-lr-{lr}-l1-{l1}" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     x_gear = np.column_stack((dataset.rpm, dataset.gear))
     y_gear = dataset.gearCmd
 
     x_train, x_test, y_train, y_test = train_test_split(x_gear, y_gear, shuffle=True, test_size=0.15)
     model = create(lr, l1)
 
-    history = model.fit(x_train, y_train, batch_size=64, epochs=20, validation_data=(x_test, y_test), shuffle=False, verbose=1)
+    history = model.fit(x_train, y_train, batch_size=64, epochs=50, validation_data=(x_test, y_test), shuffle=False, verbose=1,
+                        callbacks=[
+                            tf.keras.callbacks.TensorBoard(log_dir)
+                        ])
 
-    plt.figure()
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title(f'Gear model loss LR {lr}, L1={l1}')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(["train_loss", "val_loss"])
-    plt.savefig(f"figures/loss/gear-loss-{lr}-l1-{l1}.png")
-    plt.show()
     return model
 
 
