@@ -23,9 +23,11 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+# Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
+# Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
+# Author: Michael Samson <michael.samson@@usherbrooke.ca>
+# Université de Sherbrooke, APP2 S8GIA, A2018
 
-# Author: Simon Brodeur <simon.brodeur@usherbrooke.ca>
-# Université de Sherbrooke, APP3 S8GIA, A2018
 
 import os
 from os import listdir
@@ -65,30 +67,20 @@ def main():
     dataset.normalize()
     generate_models = True
 
-
-    accel = [(9, 3), (18, 3)]
-    steer = [9, 3]
-    gear = [12, 6]
-    lrs = [0.001, 0.0005, 0.0001]
     if generate_models:
-        for lr in lrs:
-            # Accel
-            for a in accel:
-                model_accel = acceleration_model.create_trained(dataset, lr, a[0], a[1])
-                model_accel.save('model_accel.h5')
+        # Accel
+        model_accel = acceleration_model.create_trained(dataset)
+        model_accel.save('model_accel.h5')
 
-            # Steer
-            for s in steer:
-                model_steer = steering_model.create_trained(dataset, lr, s)
-                model_steer.save('model_steer.h5')
+        # Steer
+        model_steer = steering_model.create_trained(dataset)
+        model_steer.save('model_steer.h5')
 
-            # Gear model
-            for g in gear:
-                model_gear = gear_model.create_trained(dataset, lr, g)
-                model_gear.save('model_gear.h5')
+        # Gear model
+        model_gear = gear_model.create_trained(dataset)
+        model_gear.save('model_gear.h5')
 
 
-    exit(0)
     model_accel = load_model('model_accel.h5')
     model_steer = load_model('model_steer.h5')
     model_gear = load_model('model_gear.h5')
