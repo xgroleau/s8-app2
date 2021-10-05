@@ -1,2 +1,6 @@
 *.pyc
 *.pklz
+problematique/.idea/
+problematique/torcs/__pycache__/
+problematique/scripts/drive-nnet/recordings/
+.idea/

@@ -23,14 +23,23 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+# Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
+# Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
+# Author: Michael Samson <michael.samson@@usherbrooke.ca>
+# Université de Sherbrooke, APP2 S8GIA, A2018
 
-# Author: Simon Brodeur <simon.brodeur@usherbrooke.ca>
-# Université de Sherbrooke, APP3 S8GIA, A2018
 
 import os
+from os import listdir
+from os.path import isfile, join
 import sys
 import time
 import logging
+
+
+from models import driving_model, gear_model, acceleration_model, steering_model
+from keras.models import load_model
+from data.dataset import DataSet
 
 sys.path.append('../..')
 from torcs.control.core import TorcsControlEnv, TorcsException, EpisodeRecorder
@@ -43,13 +52,50 @@ logger = logging.getLogger(__name__)
 ################################
 # Define helper functions here
 ################################
-
 def main():
-
+    
     recordingsPath = os.path.join(CDIR, 'recordings')
     if not os.path.exists(recordingsPath):
         os.makedirs(recordingsPath)
 
+    # Training model
+    files_dir = os.path.join(CDIR, 'data_set')
+
+    dataset = DataSet(files_dir)
+
+    # Normalisation
+    dataset.normalize()
+    generate_models = True
+    
+    accel = [(9, 3), (18, 3)]
+    steer = [9, 3]
+    gear = [12, 6]
+    lrs = [0.001, 0.0005, 0.0001]
+    # Create the models
+    if generate_models:
+        for lr in lrs:
+            # Accel
+            for a in accel:
+                model_accel = acceleration_model.create_trained(dataset, lr, a[0], a[1])
+                #model_accel.save('model_accel.h5')
+
+            # Steer
+            for s in steer:
+                model_steer = steering_model.create_trained(dataset, lr, s)
+                #model_steer.save('model_steer.h5')
+
+            # Gear model
+            for g in gear:
+                model_gear = gear_model.create_trained(dataset, lr, g)
+                #model_gear.save('model_gear.h5')
+
+
+    exit(0)
+    # Load each models
+    model_accel = load_model('model_accel.h5')
+    model_steer = load_model('model_steer.h5')
+    model_gear = load_model('model_gear.h5')
+    
     try:
         with TorcsControlEnv(render=False) as env:
 
@@ -67,8 +113,18 @@ def main():
                 done = False
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
-                        # TODO: Select the next action based on the observation
-                        action = env.action_space.sample()
+
+                        # Make a prediction with the current observation
+                        accel_action = acceleration_model.predict(model_accel, observation, dataset)
+                        steering_action = steering_model.predict(model_steer, observation, dataset)
+                        gear_action = gear_model.predict(model_gear, observation, dataset)
+
+                        # Unpackt the dicts returned by the prediction
+                        action = {
+                            **accel_action,
+                            **steering_action,
+                            **gear_action,
+                        }
                         recorder.save(observation, action)
     
                         # Execute the action
