@@ -52,20 +52,25 @@ def initPopulation(env, popSize):
     for i in range(popSize):
         population.append(env.action_space.sample())
     return reorderGears(population)
+    
+
+
 def breedNewGeneration(population, fitness, popSize, crossoverProb, mutationProb):
     newPopulation = []
-    numPairs = int(popSize / 2)
+    numPairs = int(popSize / 2) - 1
     pairs = doSelection(population, fitness, numPairs)
-    
+    bestElements = np.array(population)[np.argpartition(fitness, -4)[-2:]]
     for genitor1, genitor2 in pairs:
         # Perform a cross-over and place individuals in the new population
         child1, child2 = doCrossover(genitor1, genitor2, crossoverProb)
         newPopulation.extend([child1, child2])
     newPopulation = np.array(newPopulation)
-    newPopulation = doMutation(newPopulation, mutationProb)
     # Apply mutation to all individuals in the population
-    return reorderGears(newPopulation)
-    #return newPopulation
+    newPopulation = doMutation(newPopulation, mutationProb)
+    # Reorders gears
+    newPopulation = list(reorderGears(newPopulation))
+    newPopulation.extend(bestElements)
+    return newPopulation
     
 def doSelection(population, fitness, numPairs):
     # Compute selection probability distribution
@@ -321,7 +326,7 @@ def main(maxEvaluationTime=40, optimizeFor='fuelUsed', breedingRate=0.7, mutatio
         pass
 
     logger.info('All done.')
-    
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     baseConfig = [0.1, 0.01]
