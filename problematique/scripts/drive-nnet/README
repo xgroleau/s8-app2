@@ -48,3 +48,4 @@ The program uses tensorboard to view the data. You can launch tensorboard using
 "tensorboard --logdir ./logs/". You can then view the data at the address shown
 by tensorboard.
 
+To run the program, you simply need to run the main as a python script.
