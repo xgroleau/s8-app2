@@ -28,6 +28,12 @@
 # Author: Simon Brodeur <simon.brodeur@usherbrooke.ca>
 # Université de Sherbrooke, APP3 S8GIA, A2018
 
+# Modified by:
+# Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
+# Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
+# Author: Michael Samson <michael.samson@@usherbrooke.ca>
+# Université de Sherbrooke, APP2 S8GIA, A2018
+
 # ------------------------------------------------------------------------------------------
 #     Control task : drive-fuzzy
 # ------------------------------------------------------------------------------------------
@@ -35,3 +41,19 @@
 The script 'main.py' runs the TORCS engine in control mode, where control is performed client-side.
 It provides a base implementation to integrate a fuzzy logic controller. 
 Recordings of the episodes (sequences of observations/actions) for each track are stored in the 'recordings' directory.
+
+Line 67 of main.py can be modified to use different controllers for each of the three control variables:
+
+    controller = Controller(
+            steeringController = FuzzySteeringControllerSugeno(),
+            speedController = FuzzySpeedControllerSugenoV2(),
+            gearController = FuzzyGearController()
+            )
+
+Each of the variables can be controlled via the FuzzyXController class or the SimpleXController class
+the SimpleXController will simply use the code used in drive-simple for the specified variable. This allows
+fine-tuning different controllers independently from one another.
+
+
+The script 'gen-graphs.py' was used to overlap the same command curve from different runs.
+Lines 16-21 can be modified to append the different files we wish to view while line 28 determines which curve is shown.
