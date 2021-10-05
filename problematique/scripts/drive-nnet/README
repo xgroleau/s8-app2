@@ -35,3 +35,16 @@
 The script 'main.py' runs the TORCS engine in control mode, where control is performed client-side.
 It provides a base implementation to integrate a neural network controller. 
 Recordings of the episodes (sequences of observations/actions) for each track are stored in the 'recordings' directory.
+
+
+The models uses the DriveSimple recordings in the data_set forlder as a training set.
+To create the predictions, three neural networks are used, one for the gear,
+one for the steering and one for the acceleration and brake.
+
+By default the program will use the generated model, model_X.h5. To recreate 
+new models, set the generate_models variable to True.
+
+The program uses tensorboard to view the data. You can launch tensorboard using
+"tensorboard --logdir ./logs/". You can then view the data at the address shown
+by tensorboard.
+

@@ -53,8 +53,8 @@ def create(lr, l1, l2):
 
 
 def create_trained(dataset, lr=0.001, l1=18, l2=6):
-    """Creates a trained model and logs the data for tensorboard"""
-    log_dir = f"logs/accel-lr-{lr}-l1-{l1}-l2{l2}" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    """Creates a trained model and logs the data for tensorboard, returns the model"""
+    log_dir = f"logs/accel-lr-{lr}-l1-{l1}-l2{l2}"
 
     x_accel = np.dstack((dataset.speed_x, dataset.trackPos)).squeeze()
     x_accel = np.column_stack((x_accel, dataset.track[:, 8:11], dataset.wheelSpinVel))
@@ -72,7 +72,8 @@ def create_trained(dataset, lr=0.001, l1=18, l2=6):
 
 
 def predict(model, observation, dataset):
-    """Predicts using the model via the observation, the dataset is required to normalize the inputs"""
+    """Predicts using the model via the observation, the dataset is required to normalize the inputs
+    returns a dictionary of the actions"""
     # Input
     speed_x_val = dataset.normalize_speed_x(observation['speed'][0])
     track_val = dataset.normalize_track(observation['track'])[8:11]

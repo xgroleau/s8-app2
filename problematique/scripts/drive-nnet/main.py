@@ -66,21 +66,32 @@ def main():
     # Normalisation
     dataset.normalize()
     generate_models = True
-
+    
+    accel = [(9, 3), (18, 3)]
+    steer = [9, 3]
+    gear = [12, 6]
+    lrs = [0.001, 0.0005, 0.0001]
+    # Create the models
     if generate_models:
-        # Accel
-        model_accel = acceleration_model.create_trained(dataset)
-        model_accel.save('model_accel.h5')
+        for lr in lrs:
+            # Accel
+            for a in accel:
+                model_accel = acceleration_model.create_trained(dataset, lr, a[0], a[1])
+                #model_accel.save('model_accel.h5')
 
-        # Steer
-        model_steer = steering_model.create_trained(dataset)
-        model_steer.save('model_steer.h5')
+            # Steer
+            for s in steer:
+                model_steer = steering_model.create_trained(dataset, lr, s)
+                #model_steer.save('model_steer.h5')
 
-        # Gear model
-        model_gear = gear_model.create_trained(dataset)
-        model_gear.save('model_gear.h5')
+            # Gear model
+            for g in gear:
+                model_gear = gear_model.create_trained(dataset, lr, g)
+                #model_gear.save('model_gear.h5')
 
 
+    exit(0)
+    # Load each models
     model_accel = load_model('model_accel.h5')
     model_steer = load_model('model_steer.h5')
     model_gear = load_model('model_gear.h5')
@@ -103,10 +114,12 @@ def main():
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
 
+                        # Make a prediction with the current observation
                         accel_action = acceleration_model.predict(model_accel, observation, dataset)
                         steering_action = steering_model.predict(model_steer, observation, dataset)
                         gear_action = gear_model.predict(model_gear, observation, dataset)
 
+                        # Unpackt the dicts returned by the prediction
                         action = {
                             **accel_action,
                             **steering_action,

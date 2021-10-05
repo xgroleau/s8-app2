@@ -41,7 +41,8 @@ import tensorflow as tf
 
 # Model for predicting the required gear of the car
 def create(lr, l1):
-    """Creates the model, the learning rate and number or neurones can be passed as argument"""
+    """Creates the model, the learning rate and number or neurones can be passed as argument
+    returns the trained model"""
     model = Sequential()
     model.add(Dense(units=l1, activation='sigmoid', input_shape=(9,)))
     model.add(Dense(units=8, activation='softmax'))
@@ -54,7 +55,7 @@ def create(lr, l1):
 
 def create_trained(dataset, lr=0.0005, l1=12):
     """Creates a trained model and logs the data for tensorboard"""
-    log_dir = f"logs/gear-lr-{lr}-l1-{l1}" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    log_dir = f"logs/gear-lr-{lr}-l1-{l1}"
     x_gear = np.column_stack((dataset.rpm, dataset.gear))
     y_gear = dataset.gearCmd
 
@@ -70,7 +71,8 @@ def create_trained(dataset, lr=0.0005, l1=12):
 
 
 def predict(model, observation, dataset):
-    """Predicts using the model via the observation, the dataset is required to normalize the inputs"""
+    """Predicts using the model via the observation, the dataset is required to normalize the inputs
+    returns a dictionary of the actions"""
     gear_val = dataset.gear_to_categorical(observation['gear'])
     rpm_val = dataset.normalize_rpm(observation['rpm'][0])
 
