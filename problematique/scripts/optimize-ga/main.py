@@ -23,10 +23,12 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 # Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
 # Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
 # Author: Michael Samson <michael.samson@@usherbrooke.ca>
 # Université de Sherbrooke, APP2 S8GIA, A2018
+
 import os
 import sys
 import time
@@ -35,7 +37,6 @@ import logging
 
 sys.path.append('../..')
 from torcs.optim.core import TorcsOptimizationEnv, TorcsException
-
 import matplotlib.pyplot as plt
 
 CDIR = os.path.dirname(os.path.realpath(__file__))
@@ -46,14 +47,11 @@ logger = logging.getLogger(__name__)
 ################################
 # Define helper functions here
 ################################
-
 def initPopulation(env, popSize):
     population = []
     for i in range(popSize):
         population.append(env.action_space.sample())
     return reorderGears(population)
-    
-
 
 def breedNewGeneration(population, fitness, popSize, crossoverProb, mutationProb):
     newPopulation = []
@@ -70,12 +68,14 @@ def breedNewGeneration(population, fitness, popSize, crossoverProb, mutationProb
     # Reorders gears
     newPopulation = list(reorderGears(newPopulation))
     newPopulation.extend(bestElements)
+    print(len(newPopulation))
     return newPopulation
     
 def doSelection(population, fitness, numPairs):
     # Compute selection probability distribution
     eps = 1e-16
     fitness = fitness - np.min(fitness) + eps
+
     selectProb = np.cumsum(fitness) / np.sum(fitness)
     # Perform a roulette-wheel selection
     pairs = []
@@ -100,6 +100,7 @@ def doCrossover(genitor1, genitor2, crossoverProb):
         child2 = dict(arrayChild2)
         
     return child1, child2
+
 def doBinaryMutation(element, mutationProb):
     element = encodeElement(element)
     # Mutate a certain percentage of bits
@@ -129,6 +130,7 @@ def decodeElement(element):
         newValue[key] = (bin2ufloat(value, nbits) * rangeOfValue) + minimum
         
     return newValue
+
 def ufloat2bin(cvalue, nbits):
     if nbits > 64:
         raise Exception('Maximum number of bits limited to 64')
@@ -145,13 +147,14 @@ def ufloat2bin(cvalue, nbits):
     bvalue[np.logical_and(ivalue >= 0, ivalue <= 2**nbits - 1)] = (np.bitwise_and(np.tile(ivalue[:, np.newaxis], (1, nbits)), np.tile(bitmask[np.newaxis, :], (len(cvalue), 1))) != 0)
     return bvalue
 
+
 def bin2ufloat(bvalue, nbits):
     if nbits > 64:
         raise Exception('Maximum number of bits limited to 64')
     ivalue = np.sum(bvalue * (2**np.arange(nbits)[np.newaxis, :]), axis=-1)
     cvalue = ivalue / (2**nbits - 1)
-
     return cvalue
+
 
 def doMutation(population, mutationProb):
     for i in range(len(population)):
@@ -175,6 +178,7 @@ def getKeys():
     return ['front-spoiler-angle', 'gear-2-ratio', 'gear-3-ratio', 
             'gear-4-ratio', 'gear-5-ratio', 'gear-6-ratio', 
             'rear-differential-ratio', 'rear-spoiler-angle']
+
 def getKeyForI(i):
     # Return the key value for a certain position in list
     if i == 0: 
@@ -211,6 +215,7 @@ def getAverage(observations, key):
     for observation in observations:
         average += observation[key][0] / numElement
     return average
+
 def reorderGears(newPopulation):
     for i in range(len(newPopulation)):
         param, data = list(zip(*list(newPopulation[i].items())))
@@ -220,6 +225,10 @@ def reorderGears(newPopulation):
         newPopulation[i] = dict(zip(param, sortedGears))
         
     return newPopulation
+    
+def addParamsToList(paramsBest, bestIndividual):
+    for key in paramsBest:
+        paramsBest[key].append(bestIndividual[key][0])
     
 def showFigure(numIteration, maxRecord, overallMaxRecord, avgRecord, valueShown, breedingRate, mutationRate, popSize):
     fig = plt.figure()
@@ -239,7 +248,25 @@ def showFigure(numIteration, maxRecord, overallMaxRecord, avgRecord, valueShown,
 
     plt.show()
             
-def main(maxEvaluationTime=40, optimizeFor='fuelUsed', breedingRate=0.7, mutationRate=0.01, popSize=100, numIteration=100):
+def plotParams(paramBest):
+    fig1 = plt.figure(9)
+    fig2 = plt.figure(10)
+    axGear = fig1.add_subplot(111)    
+    axAngle = fig2.add_subplot(111)
+    for key in paramBest:
+        if 'ratio' in key:
+            axGear.plot(paramBest[key], label=key)
+        else:
+            axAngle.plot(paramBest[key], label=key)
+    axGear.set_xlabel('Generation')
+    axAngle.set_xlabel('Generation')
+    axGear.set_ylabel('Gear ratios')
+    axAngle.set_ylabel('Angle')
+    axGear.legend()
+    axAngle.legend()
+    plt.show()
+    
+def main(maxEvaluationTime=40, optimizeFor='topspeed', breedingRate=0.2, mutationRate=0.01, popSize=100, numIteration=100):
     try:
         with TorcsOptimizationEnv(maxEvaluationTime) as env:
             population = initPopulation(env, popSize)
@@ -258,6 +285,12 @@ def main(maxEvaluationTime=40, optimizeFor='fuelUsed', breedingRate=0.7, mutatio
             maxSpeedRecord = np.zeros((numIteration,))
             overallMaxSpeedRecord = np.zeros((numIteration,))
             avgMaxSpeedRecord = np.zeros((numIteration,))
+            paramsBest =  {'front-spoiler-angle': [], 'gear-2-ratio': [], 
+                           'gear-3-ratio': [], 'gear-4-ratio': [], 
+                           'gear-5-ratio': [], 'gear-6-ratio': [], 
+                           'rear-differential-ratio': [], 'rear-spoiler-angle': []}
+
+            
             # Loop a few times for demonstration purpose
             for i in range(numIteration):
                 fitness = []
@@ -275,9 +308,7 @@ def main(maxEvaluationTime=40, optimizeFor='fuelUsed', breedingRate=0.7, mutatio
                     else:
                         fitness.append(observation[optimizeFor][0])
                     observations.append(observation)
-                    
- 
-                    
+                                       
                 maxIndex = fitness.index(max(fitness))
                 if fitness[maxIndex] > bestIndividualFitness:
                     bestIndividual = population[maxIndex]
@@ -296,15 +327,19 @@ def main(maxEvaluationTime=40, optimizeFor='fuelUsed', breedingRate=0.7, mutatio
                 maxSpeedRecord[i] = observations[maxIndex]['topspeed'][0]
                 overallMaxSpeedRecord[i] = bestIndividualObservations['topspeed'][0]
                 avgMaxSpeedRecord[i] = getAverage(observations, 'topspeed')
-#                logger.info('Best %s   =   %f', optimizeFor, fitness[maxIndex])
-#                logger.info('Generated new parameter vector: ' + str(population[maxIndex]))
+                addParamsToList(paramsBest, population[maxIndex])
+                logger.info('Best %s   =   %f', optimizeFor, fitness[maxIndex])
+                logger.info('Generated new parameter vector: ' + str(population[maxIndex]))
+
                 # Get new Gen
                 population = breedNewGeneration(population, fitness, popSize, breedingRate, mutationRate)
                 
-#            showFigure(numIteration, maxFitnessRecord, overallMaxFitnessRecord, avgMaxFitnessRecord, 'Fitness', breedingRate, mutationRate, popSize)
-#            showFigure(numIteration, maxFuelRecord, overallMaxFuelRecord, avgMaxFuelRecord, 'Fuel',  breedingRate, mutationRate, popSize)
-#            showFigure(numIteration, maxDistanceRecord, overallMaxDistanceRecord, avgMaxDistanceRecord, 'Distance',  breedingRate, mutationRate, popSize)
-#            showFigure(numIteration, maxSpeedRecord, overallMaxSpeedRecord, avgMaxSpeedRecord, 'Top speed',  breedingRate, mutationRate, popSize)
+            showFigure(numIteration, maxFitnessRecord, overallMaxFitnessRecord, avgMaxFitnessRecord, 'Fitness', breedingRate, mutationRate, popSize)
+            showFigure(numIteration, maxFuelRecord, overallMaxFuelRecord, avgMaxFuelRecord, 'Fuel',  breedingRate, mutationRate, popSize)
+            showFigure(numIteration, maxDistanceRecord, overallMaxDistanceRecord, avgMaxDistanceRecord, 'Distance',  breedingRate, mutationRate, popSize)
+            showFigure(numIteration, maxSpeedRecord, overallMaxSpeedRecord, avgMaxSpeedRecord, 'Top speed',  breedingRate, mutationRate, popSize)
+            # Plot gear convergence
+            plotParams(paramsBest)
             
 #                 Display simulation results
             logger.info('##################################################')
@@ -327,28 +362,29 @@ def main(maxEvaluationTime=40, optimizeFor='fuelUsed', breedingRate=0.7, mutatio
 
     logger.info('All done.')
 
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     baseConfig = [0.1, 0.01]
     stepConfig = [0.1, 0.01]
     result = []
     generalBest = ([], 0, 0, 0)
-    fig = plt.figure()
-#    main()
-    for j in range(2):
-        resultI = []
-        for i in range(5):
-            config = baseConfig.copy()
-            config[0] = baseConfig[0] + stepConfig[0] * i             
-            config[1] = baseConfig[1] + stepConfig[1] * j 
-            bestResult = main(40, 'distRaced', config[0], config[1], 50, 100)
-            plt.plot(bestResult, label=('br: ' + str(config[0]) + ' mr: ' + str(config[1])))
-#            candidate, candidateFitness = bestResult
-#            _, currentBestFitness, _, _ = generalBest
-#            resultI.append((candidate, candidateFitness, config[0], config[1]))
-#            if (candidateFitness > currentBestFitness):
-#                generalBest = (candidate, candidateFitness, config[0], config[1])
-        result.append(resultI)
-    plt.legend()
-    plt.show()                
-    
+    main()
+#    fig = plt.figure()
+#    for j in range(2):
+#        resultI = []
+#        for i in range(5):
+#            config = baseConfig.copy()
+#            config[0] = baseConfig[0] + stepConfig[0] * i             
+#            config[1] = baseConfig[1] + stepConfig[1] * j 
+#            bestResult = main(40, 'distRaced', config[0], config[1], 50, 100)
+#            plt.plot(bestResult, label=('br: ' + str(config[0]) + ' mr: ' + str(config[1])))
+##            candidate, candidateFitness = bestResult
+##            _, currentBestFitness, _, _ = generalBest
+##            resultI.append((candidate, candidateFitness, config[0], config[1]))
+##            if (candidateFitness > currentBestFitness):
+##                generalBest = (candidate, candidateFitness, config[0], config[1])
+#        result.append(resultI)
+#    plt.legend()
+#    plt.show()                
+#    
