@@ -1,3 +1,8 @@
+# Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
+# Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
+# Author: Michael Samson <michael.samson@@usherbrooke.ca>
+# Université de Sherbrooke, APP2 S8GIA, A2018
+
 import numpy as np
 import skfuzzy as fuzz
 import matplotlib.pyplot as plt

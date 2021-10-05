@@ -24,8 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Simon Brodeur <simon.brodeur@usherbrooke.ca>
-# Université de Sherbrooke, APP3 S8GIA, A2018
+# Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
+# Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
+# Author: Michael Samson <michael.samson@@usherbrooke.ca>
+# Université de Sherbrooke, APP2 S8GIA, A2018
 
 import os
 import sys

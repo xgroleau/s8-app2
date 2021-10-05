@@ -1,3 +1,8 @@
+# Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
+# Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
+# Author: Michael Samson <michael.samson@@usherbrooke.ca>
+# Université de Sherbrooke, APP2 S8GIA, A2018
+
 import numpy as np
 from controllers.gear_controller.simple_gear_controller import SimpleGearController
 from controllers.speed_controllers.simple_speed_controller import SimpleSpeedController
