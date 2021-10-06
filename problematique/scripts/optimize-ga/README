@@ -32,6 +32,12 @@
 #     Optimization task : optimize-ga
 # ------------------------------------------------------------------------------------------
 
-The script 'main.py' runs the TORCS engine in optimization mode, where the client provides a 
-set of parameters (e.g. gear ratios) to be evaluated on a linear track. It provides a base implementation to
-optimize the set of parameters using a genetic algorithm.
+The script main.py is used to run the genetic algorithm.
+
+The call to main() is paremetized according to how we want to run the GA.
+The options 'fuelUsed' and 'topspeed' can be used to specify on what variable to optimize.
+
+Other options can be set in parameters.py such as the number of bits used to represent every value as well as the valid ranges for each value.
+
+At the end of an optimization, two graphs appear to show the evolution of the fitness over generations
+as well as the evolution of the different parameters over time.
