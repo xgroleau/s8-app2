@@ -65,21 +65,21 @@ def main():
 
     # Normalisation
     dataset.normalize()
-    generate_models = False
+    generate_models = True
     
     
     # Create the models
     if generate_models:
         # Accel
-        model_accel = acceleration_model.create_trained(dataset, lr, a[0], a[1])
+        model_accel = acceleration_model.create_trained(dataset)
         model_accel.save('model_accel.h5')
 
         # Steer
-        model_steer = steering_model.create_trained(dataset, lr, s)
+        model_steer = steering_model.create_trained(dataset)
         model_steer.save('model_steer.h5')
 
         # Gear model
-        model_gear = gear_model.create_trained(dataset, lr, g)
+        model_gear = gear_model.create_trained(dataset)
         model_gear.save('model_gear.h5')
 
     # Load each models

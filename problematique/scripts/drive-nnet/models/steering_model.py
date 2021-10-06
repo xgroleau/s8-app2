@@ -51,7 +51,7 @@ def create(lr, l1):
     return model
 
 
-def create_trained(dataset, lr=0.0001, l1=9):
+def create_trained(dataset, lr=0.0001, l1=3):
     """Creates a trained model and logs the data for tensorboard,
     returns the trained model"""
     log_dir = f"logs/steering-lr-{lr}-l1-{l1}"

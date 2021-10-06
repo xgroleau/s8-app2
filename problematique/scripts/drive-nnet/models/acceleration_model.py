@@ -52,7 +52,7 @@ def create(lr, l1, l2):
     return model
 
 
-def create_trained(dataset, lr=0.001, l1=18, l2=6):
+def create_trained(dataset, lr=0.001, l1=9, l2=3):
     """Creates a trained model and logs the data for tensorboard, returns the model"""
     log_dir = f"logs/accel-lr-{lr}-l1-{l1}-l2{l2}"
 
