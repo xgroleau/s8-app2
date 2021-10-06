@@ -24,8 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Simon Brodeur <simon.brodeur@usherbrooke.ca>
-# Université de Sherbrooke, APP3 S8GIA, A2018
+# Author: Xavier Groleau <xavier.groleau@@usherbrooke.ca>
+# Author: Charles Quesnel <charles.quesnel@@usherbrooke.ca>
+# Author: Michael Samson <michael.samson@@usherbrooke.ca>
+# Université de Sherbrooke, APP2 S8GIA, A2018
 
 import os
 import sys
@@ -39,6 +41,10 @@ CDIR = os.path.dirname(os.path.realpath(__file__))
 
 logger = logging.getLogger(__name__)
 
+from controllers.controller import Controller
+from controllers.steering_controllers.fuzzy_steering_controller_sugeno import FuzzySteeringControllerSugeno
+from controllers.speed_controllers.fuzzy_speed_controller_sugeno_v2 import FuzzySpeedControllerSugenoV2
+from controllers.gear_controller.fuzzy_gear_controller import FuzzyGearController
 
 ################################
 # Define helper functions here
@@ -55,6 +61,15 @@ def main():
 
             nbTracks = len(TorcsControlEnv.availableTracks)
             nbSuccessfulEpisodes = 0
+            
+            # Construct the controller using the controller we wish.
+            # For example, we could have the FuzzyGearController with a SimpleSteeringController
+            controller = Controller(
+                    steeringController = FuzzySteeringControllerSugeno(),
+                    speedController = FuzzySpeedControllerSugenoV2(),
+                    gearController = FuzzyGearController()
+                    )
+            
             for episode in range(nbTracks):
                 logger.info('Episode no.%d (out of %d)' % (episode + 1, nbTracks))
                 startTime = time.time()
@@ -65,10 +80,11 @@ def main():
                 nbStepsShowStats = 1000
                 curNbSteps = 0
                 done = False
+                
                 with EpisodeRecorder(os.path.join(recordingsPath, 'track-%s.pklz' % (trackName))) as recorder:
                     while not done:
-                        # TODO: Select the next action based on the observation
-                        action = env.action_space.sample()
+                        # Compute action from the controller
+                        action = controller.computeAction(observation)
                         recorder.save(observation, action)
     
                         # Execute the action

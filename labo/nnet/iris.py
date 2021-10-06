@@ -46,18 +46,18 @@ from keras.optimizers import SGD, Adam
 
 def main():
 
-    # Load iris data set from file
+    # Load iris data_set set from file
     # Attributes are: petal length, petal width, sepal length, sepal width
-    # TODO: Analyze the input data
+    # TODO: Analyze the input data_set
     S = scipy.io.loadmat('iris.mat')
-    data = np.array(S['data'], dtype=np.float32)
+    data = np.array(S['data_set'], dtype=np.float32)
     target = np.array(S['target'], dtype=np.float32)
     for i in range(3):
         data[i] = (data[i] - data[i].min())/(data[i].max() - data[i].min())
     
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=15)
 
-    # TODO : Apply any relevant transformation to the data
+    # TODO : Apply any relevant transformation to the data_set
     # (e.g. filtering, normalization, dimensionality reduction)
 
     # Create neural network
@@ -83,7 +83,7 @@ def main():
     model = load_model('iris.h5')
     targetPred = model.predict(data)
 
-    # Print the number of classification errors from the training data
+    # Print the number of classification errors from the training data_set
     nbErrors = np.sum(np.argmax(targetPred, axis=-1) != np.argmax(target, axis=-1))
     accuracy = (len(data) - nbErrors) / len(data)
     print('Classification accuracy: %0.3f' % (accuracy))
